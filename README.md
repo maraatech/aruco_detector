@@ -52,19 +52,33 @@ roslaunch aruco_detector detector.launch
 ```xml
 <?xml version="1.0"?>
 <launch>
-  <node name="detector_node" pkg="aruco_detector" type="detector_node" output="screen">
-    <param name="image"         value="camera/color/image_raw" />
-    <param name="camera_info"   value="camera/color/camera_info" />
-    <param name="marker_size"   value="0.0315" />
-  </node>
+  <arg name="ns"            default="camera"/>
+  <arg name="image"         default="color/image_raw"/>
+  <arg name="camera_info"   default="color/camera_info"/>
+  <arg name="marker_size"   default="0.0315"/>
+
+  <group ns="$(arg ns)">
+      <node name="detector_node" pkg="aruco_detector" type="detector_node" output="screen">
+        <param name="image"         value="$(arg image)" />
+        <param name="camera_info"   value="$(arg camera_info)" />
+        <param name="marker_size"   value="$(arg marker_size)" />
+        <param name="tf_prefix"     value="$(arg ns)" />
+      </node>
+   </group>
 </launch>
+```
+
+Name space that the node operates in. 
+
+```
+<arg name="ns"            default="camera"/>
 ```
 
 Image and camera info topics to subscribe to.
 
 ```
-<param name="image" value="camera/color/image_raw" />
-<param name="camera_info"   value="camera/color/camera_info" />
+<arg name="image"         default="color/image_raw"/>
+<arg name="camera_info"   default="color/camera_info"/>
 ```
 
 Size of the marker, length of the square marker in mm
@@ -79,26 +93,40 @@ ROS node that will detect aruco markers in RGBD data and publish the pose transf
 
 ###### Launch File
 ```
-roslaunch aruco_detector detector.launch
+roslaunch aruco_detector depth_detector.launch
 ```
 
 ```xml
 <?xml version="1.0"?>
 <launch>
-  <node name="depth_detector_node" pkg="aruco_detector" type="depth_detector_node" output="screen">
-    <param name="image"         value="camera/color/image_raw" />
-    <param name="depth_image"   value="camera/aligned_depth_to_color/image_raw" />
-    <param name="camera_info"   value="camera/color/camera_info" />
-  </node>
+  <arg name="ns"            default="camera"/>
+  <arg name="image"         default="color/image_raw"/>
+  <arg name="depth_image"   default="aligned_depth_to_color/image_raw"/>
+  <arg name="camera_info"   default="color/camera_info"/>
+
+  <group ns="$(arg ns)">
+      <node name="depth_detector_node" pkg="aruco_detector" type="depth_detector_node" output="screen">
+        <param name="image"         value="$(arg image)" />
+        <param name="depth_image"   value="$(arg depth_image)" />
+        <param name="camera_info"   value="$(arg camera_info)" />
+        <param name="tf_prefix"     value="$(arg ns)" />
+      </node>
+   </group>
 </launch>
+```
+
+Name space that the node operates in. 
+
+```
+<arg name="ns"            default="camera"/>
 ```
 
 RGB Image, Depth Image, and camera info topics to subscribe to.
 
 ```
-<param name="image" value="camera/color/image_raw" />
-<param name="depth_image"   value="camera/aligned_depth_to_color/image_raw" />
-<param name="camera_info"   value="camera/color/camera_info" />
+<arg name="image"         default="color/image_raw"/>
+<arg name="depth_image"   default="aligned_depth_to_color/image_raw"/>
+<arg name="camera_info"   default="color/camera_info"/>
 ```
 
 ## Version
