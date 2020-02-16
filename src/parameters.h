@@ -13,6 +13,7 @@ namespace cares {
         const std::string DEPTH_IMAGE_S = "depth_image";
         const std::string CAMERA_INFO_S = "camera_info";
         const std::string MARKER_SIZE_D = "marker_size";
+        const std::string TF_PREFIX_S   = "tf_prefix";
     }
 }
 

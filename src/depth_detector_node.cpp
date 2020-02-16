@@ -33,6 +33,7 @@ using namespace sensor_msgs;
 using namespace message_filters;
 
 DepthMarkerDetector detector;
+std::string tf_ns = "_aruco_";
 
 /**
  * Convert ROS image format to OpenCV image format
@@ -73,7 +74,7 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
     geometry_msgs::TransformStamped pose_tf;
     pose_tf.header.stamp    = depth_image_msg->header.stamp;
     pose_tf.header.frame_id = depth_image_msg->header.frame_id;
-    pose_tf.child_frame_id = "aruco_"+std::to_string(id);
+    pose_tf.child_frame_id  = tf_ns+std::to_string(id);
 
     pose_tf.transform.translation.x = marker.position.x;
     pose_tf.transform.translation.y = marker.position.y;
@@ -96,7 +97,7 @@ int main(int argc, char *argv[]) {
 
   ///<Subscriber
   //Rail Status
-  std::string image, depth_image, camera_info;
+  std::string image, depth_image, camera_info, tf_prefix;
   if(!nh_private.getParam(cares::marker::IMAGE_S, image)){
     ROS_ERROR((cares::marker::IMAGE_S + " not set.").c_str());
     return 0;
@@ -112,6 +113,12 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   ROS_INFO(camera_info.c_str());
+  if(!nh_private.getParam(cares::marker::TF_PREFIX_S, tf_prefix)){
+    ROS_ERROR((cares::marker::TF_PREFIX_S + " not set.").c_str());
+    return 0;
+  }
+  tf_ns = tf_prefix + tf_ns;
+  ROS_INFO(tf_ns.c_str());
 
   Subscriber<sensor_msgs::Image> image_sub(nh, image, 1);
   Subscriber<sensor_msgs::Image> depth_image_sub(nh, depth_image, 1);

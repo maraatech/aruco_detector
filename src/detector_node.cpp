@@ -35,6 +35,7 @@ using namespace message_filters;
 
 MarkerDetector detector;
 double marker_size;
+std::string tf_ns = "_aruco_";
 
 /**
  * Convert ROS image format to OpenCV image format
@@ -65,7 +66,6 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
   cv::Mat image = convertToMat(image_msg);
 //  std::map<int, std::vector<cv::Point> > markers = detector.processImage(image);
   std::map<int, geometry_msgs::Pose> markers = detector.processImages(image, *camera_info, marker_size,true);
-
   for(auto marker_info : markers){
     int id = marker_info.first;
     geometry_msgs::Pose marker = marker_info.second;
@@ -74,7 +74,7 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
     geometry_msgs::TransformStamped pose_tf;
     pose_tf.header.stamp    = image_msg->header.stamp;
     pose_tf.header.frame_id = image_msg->header.frame_id;
-    pose_tf.child_frame_id = "aruco_"+std::to_string(id);
+    pose_tf.child_frame_id  = tf_ns+std::to_string(id);
 
     pose_tf.transform.translation.x = marker.position.x;
     pose_tf.transform.translation.y = marker.position.y;
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 
   ///<Subscriber
   //Rail Status
-  std::string image, camera_info;
+  std::string image, camera_info, tf_prefix;
   if(!nh_private.getParam(cares::marker::IMAGE_S, image)){
     ROS_ERROR((cares::marker::IMAGE_S + " not set.").c_str());
     return 0;
@@ -113,6 +113,12 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   ROS_INFO(std::to_string(marker_size).c_str());
+  if(!nh_private.getParam(cares::marker::TF_PREFIX_S, tf_prefix)){
+    ROS_ERROR((cares::marker::TF_PREFIX_S + " not set.").c_str());
+    return 0;
+  }
+  tf_ns = tf_prefix + tf_ns;
+  ROS_INFO(tf_ns.c_str());
 
   Subscriber<sensor_msgs::Image> image_sub(nh, image, 1);
   Subscriber<sensor_msgs::CameraInfo> camera_info_sub(nh, camera_info, 1);
