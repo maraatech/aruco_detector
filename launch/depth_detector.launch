@@ -2,15 +2,19 @@
 <launch>
   <arg name="ns"            default="camera"/>
   <arg name="image"         default="color/image_raw"/>
+  <arg name="markers"       default="markers"/>
   <arg name="depth_image"   default="aligned_depth_to_color/image_raw"/>
   <arg name="camera_info"   default="color/camera_info"/>
+  <arg name="display"       default="true"/>
 
   <group ns="$(arg ns)">
       <node name="depth_detector_node" pkg="aruco_detector" type="depth_detector_node" output="screen">
         <param name="image"         value="$(arg image)" />
+        <param name="markers"       value="$(arg markers)"/>
         <param name="depth_image"   value="$(arg depth_image)" />
         <param name="camera_info"   value="$(arg camera_info)" />
         <param name="tf_prefix"     value="$(arg ns)" />
+        <param name="display"       value="$(arg display)"/>
       </node>
    </group>
 </launch>

@@ -23,6 +23,7 @@
 #include <tf2/transform_datatypes.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <geometry_msgs/PoseArray.h>
 
 #include "detector.h"
 #include "parameters.h"
@@ -34,8 +35,11 @@ using namespace sensor_msgs;
 using namespace message_filters;
 
 MarkerDetector detector;
-double marker_size;
 std::string tf_ns = "_aruco_";
+ros::Publisher pub_marker_pose;
+bool display = true;
+double marker_size;
+
 
 /**
  * Convert ROS image format to OpenCV image format
@@ -65,10 +69,15 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
               const sensor_msgs::CameraInfoConstPtr &camera_info){
   cv::Mat image = convertToMat(image_msg);
 //  std::map<int, std::vector<cv::Point> > markers = detector.processImage(image);
-  std::map<int, geometry_msgs::Pose> markers = detector.processImages(image, *camera_info, marker_size,true);
+  std::map<int, geometry_msgs::Pose> markers = detector.processImages(image, *camera_info, marker_size,display);
+
+  geometry_msgs::PoseArray poses;
+  poses.header.stamp = image_msg->header.stamp;
+  poses.header.frame_id = image_msg->header.frame_id;
   for(auto marker_info : markers){
     int id = marker_info.first;
     geometry_msgs::Pose marker = marker_info.second;
+    poses.poses.push_back(marker);
 
     static tf2_ros::TransformBroadcaster br;
     geometry_msgs::TransformStamped pose_tf;
@@ -87,6 +96,7 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
 
     br.sendTransform(pose_tf);
   }
+  pub_marker_pose.publish(poses);
 }
 
 int main(int argc, char *argv[]) {
@@ -97,11 +107,16 @@ int main(int argc, char *argv[]) {
 
   ///<Subscriber
   //Rail Status
-  std::string image, camera_info, tf_prefix;
+  std::string image, marker, camera_info, tf_prefix;
   if(!nh_private.getParam(cares::marker::IMAGE_S, image)){
     ROS_ERROR((cares::marker::IMAGE_S + " not set.").c_str());
     return 0;
   }
+  if(!nh_private.getParam(cares::marker::MARKERS_S, marker)){
+    ROS_ERROR((cares::marker::MARKERS_S + " not set.").c_str());
+    return 0;
+  }
+  ROS_INFO(marker.c_str());
   ROS_INFO(image.c_str());
   if(!nh_private.getParam(cares::marker::CAMERA_INFO_S, camera_info)){
     ROS_ERROR((cares::marker::CAMERA_INFO_S + " not set.").c_str());
@@ -119,6 +134,7 @@ int main(int argc, char *argv[]) {
   }
   tf_ns = tf_prefix + tf_ns;
   ROS_INFO(tf_ns.c_str());
+  nh_private.param(cares::marker::DISPLAY_B, display, true);
 
   Subscriber<sensor_msgs::Image> image_sub(nh, image, 1);
   Subscriber<sensor_msgs::CameraInfo> camera_info_sub(nh, camera_info, 1);
@@ -126,6 +142,8 @@ int main(int argc, char *argv[]) {
   typedef sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::CameraInfo> SyncPolicy;
   Synchronizer<SyncPolicy> sync_three(SyncPolicy(10), image_sub, camera_info_sub);
   sync_three.registerCallback(boost::bind(callback, _1, _2));
+
+  pub_marker_pose = nh.advertise<geometry_msgs::PoseArray>(marker, 10);
 
   ROS_INFO("Ready to find aruco markers");
 

@@ -1,5 +1,4 @@
-///home/anyone/catkin_ws/src/maara_pc_mapping/CMakeLists.txt
-//
+
 #include "ros/ros.h"
 #include <tf2/LinearMath/Quaternion.h>
 #include <rosconsole/macros_generated.h>

@@ -15,6 +15,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <boost/thread.hpp>
 #include "geometry_msgs/PointStamped.h"
+#include "geometry_msgs/PoseArray.h"
 #include "geometry_msgs/Pose.h"
 #include "depth_detector.h"
 #include <sensor_msgs/CameraInfo.h>
@@ -34,6 +35,8 @@ using namespace message_filters;
 
 DepthMarkerDetector detector;
 std::string tf_ns = "_aruco_";
+ros::Publisher pub_marker_pose;
+bool display = true;
 
 /**
  * Convert ROS image format to OpenCV image format
@@ -64,11 +67,15 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
               const sensor_msgs::CameraInfoConstPtr &camera_info){
   cv::Mat image = convertToMat(image_msg);
   cv::Mat depth_image = convertToMat(depth_image_msg);
-  std::map<int, geometry_msgs::Pose> markers = detector.processImage(image, depth_image, *camera_info, true);
+  std::map<int, geometry_msgs::Pose> markers = detector.processImage(image, depth_image, *camera_info, display);
 
+  geometry_msgs::PoseArray poses;
+  poses.header.stamp = depth_image_msg->header.stamp;
+  poses.header.frame_id = depth_image_msg->header.frame_id;
   for(auto marker_info : markers){
     int id = marker_info.first;
     geometry_msgs::Pose marker = marker_info.second;
+    poses.poses.push_back(marker);
 
     static tf2_ros::TransformBroadcaster br;
     geometry_msgs::TransformStamped pose_tf;
@@ -87,6 +94,7 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
 
     br.sendTransform(pose_tf);
   }
+  pub_marker_pose.publish(poses);
 }
 
 int main(int argc, char *argv[]) {
@@ -97,12 +105,17 @@ int main(int argc, char *argv[]) {
 
   ///<Subscriber
   //Rail Status
-  std::string image, depth_image, camera_info, tf_prefix;
+  std::string image, marker, depth_image, camera_info, tf_prefix;
   if(!nh_private.getParam(cares::marker::IMAGE_S, image)){
     ROS_ERROR((cares::marker::IMAGE_S + " not set.").c_str());
     return 0;
   }
   ROS_INFO(image.c_str());
+  if(!nh_private.getParam(cares::marker::MARKERS_S, marker)){
+    ROS_ERROR((cares::marker::MARKERS_S + " not set.").c_str());
+    return 0;
+  }
+  ROS_INFO(marker.c_str());
   if(!nh_private.getParam(cares::marker::DEPTH_IMAGE_S, depth_image)){
     ROS_ERROR((cares::marker::DEPTH_IMAGE_S + " not set.").c_str());
     return 0;
@@ -119,6 +132,7 @@ int main(int argc, char *argv[]) {
   }
   tf_ns = tf_prefix + tf_ns;
   ROS_INFO(tf_ns.c_str());
+  nh_private.param(cares::marker::DISPLAY_B, display, true);
 
   Subscriber<sensor_msgs::Image> image_sub(nh, image, 1);
   Subscriber<sensor_msgs::Image> depth_image_sub(nh, depth_image, 1);
@@ -127,6 +141,8 @@ int main(int argc, char *argv[]) {
   typedef sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo> SyncPolicy;
   Synchronizer<SyncPolicy> sync_three(SyncPolicy(10), image_sub, depth_image_sub, camera_info_sub);
   sync_three.registerCallback(boost::bind(callback, _1, _2, _3));
+
+  pub_marker_pose = nh.advertise<geometry_msgs::PoseArray>(marker, 10);
 
   ROS_INFO("Ready to find aruco markers");
 
