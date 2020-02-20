@@ -130,19 +130,23 @@ std::map<int, geometry_msgs::Pose> DepthMarkerDetector::processImage(Mat image, 
     if (!isValid(top_left) || !isValid(top_right) || !isValid(bot_right) || !isValid(bot_left))
       continue;
 
-    //vectors that represent the edges of the square
+    //vectors that represent the direction of the edges of the square
     geometry_msgs::Pose top  = diff(top_right, top_left);
     geometry_msgs::Pose right = diff(top_right, bot_right);
     geometry_msgs::Pose left = diff(top_left, bot_left);
     geometry_msgs::Pose bottom  = diff(bot_right, bot_left);
 
+    //normalise
+    top = norm(top);
+    right = norm(right);
+    left = norm(left);
+    bottom = norm(bottom);
+
     //calculate unit vector for X axis by averaging top and bottom edges and normalising 
     geometry_msgs::Pose X = ave(top, bottom);
-    X = norm(X);
 
     //calculate unit vector for Y axis by averaging left and right edges and normalising
     geometry_msgs::Pose Y = ave(left, right);
-    Y = norm(Y);
   
     //Z axis is the crossproduct of X and Y
     geometry_msgs::Pose Z = crossProduct(X, Y);
