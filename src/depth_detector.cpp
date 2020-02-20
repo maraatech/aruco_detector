@@ -57,12 +57,39 @@ geometry_msgs::Pose ave(geometry_msgs::Pose p1, geometry_msgs::Pose p2){
   return pose;
 }
 
-geometry_msgs::Pose crossProdict(geometry_msgs::Pose p1, geometry_msgs::Pose p2){
+geometry_msgs::Pose crossProduct(geometry_msgs::Pose p1, geometry_msgs::Pose p2){
   geometry_msgs::Pose pose;
   pose.position.x = p1.position.y * p2.position.z - p1.position.z * p2.position.y;
   pose.position.y = p1.position.z * p2.position.x - p1.position.x * p2.position.z;
   pose.position.z = p1.position.x * p2.position.y - p1.position.y * p2.position.x;
   pose.orientation.w = 1.0;
+  return pose;
+}
+
+geometry_msgs::Pose add(geometry_msgs::Pose p1, geometry_msgs::Pose p2){
+  geometry_msgs::Pose pose;
+  pose.position.x = (p1.position.x + p2.position.x);
+  pose.position.y = (p1.position.y + p2.position.y);
+  pose.position.z = (p1.position.z + p2.position.z);
+  pose.orientation.w = 1.0;
+  return pose;
+}
+
+geometry_msgs::Pose divide(geometry_msgs::Pose p1, float p2){
+  geometry_msgs::Pose pose;
+  pose.position.x = p1.position.x/p2;
+  pose.position.y = p1.position.y/p2;
+  pose.position.z = p1.position.z/p2;
+  pose.orientation.w = 1.0;
+  return pose;
+}
+
+geometry_msgs::Pose norm(geometry_msgs::Pose p1){
+  geometry_msgs::Pose pose;
+    double length = sqrt(p1.position.x * p1.position.x + p1.position.y * p1.position.y + p1.position.z * p1.position.z);
+    pose.position.x = p1.position.x / length;
+    pose.position.y = p1.position.y / length;
+    pose.position.z = p1.position.z / length;
   return pose;
 }
 
@@ -92,7 +119,8 @@ std::map<int, geometry_msgs::Pose> DepthMarkerDetector::processImage(Mat image, 
     cv::Point c2 = marker_corners[index][1];
     cv::Point c3 = marker_corners[index][2];
     cv::Point c4 = marker_corners[index][3];
-
+  
+    //find depth point for each corner + centre
     geometry_msgs::Pose p_centre  = findDepthPoint(depth_image, camera_info, centre.x, centre.y);
     geometry_msgs::Pose top_left  = findDepthPoint(depth_image, camera_info, c1.x, c1.y);
     geometry_msgs::Pose top_right = findDepthPoint(depth_image, camera_info, c2.x, c2.y);
@@ -102,63 +130,81 @@ std::map<int, geometry_msgs::Pose> DepthMarkerDetector::processImage(Mat image, 
     if (!isValid(top_left) || !isValid(top_right) || !isValid(bot_right) || !isValid(bot_left))
       continue;
 
-    top_left  = diff(top_left, p_centre);
-    top_right = diff(top_right, p_centre);
-    bot_right = diff(bot_right, p_centre);
-    bot_left  = diff(bot_left, p_centre);
+    //vectors that represent the edges of the square
+    geometry_msgs::Pose top  = diff(top_right, top_left);
+    geometry_msgs::Pose right = diff(top_right, bot_right);
+    geometry_msgs::Pose left = diff(top_left, bot_left);
+    geometry_msgs::Pose bottom  = diff(bot_right, bot_left);
 
-    geometry_msgs::Pose v1 = top_left;
-    geometry_msgs::Pose v2 = bot_left;
+    //calculate unit vector for X axis by averaging top and bottom edges and normalising 
+    geometry_msgs::Pose X = ave(top, bottom);
+    X = norm(X);
 
-    geometry_msgs::Pose X = ave(v2, v1);
-    double length_x = sqrt(X.position.x * X.position.x + X.position.y * X.position.y + X.position.z * X.position.z);
-    X.position.x /= length_x;
-    X.position.y /= length_x;
-    X.position.z /= length_x;
-
-    geometry_msgs::Pose v3 = top_left;
-    geometry_msgs::Pose v4 = top_right;
-
-    geometry_msgs::Pose Y = ave(v4, v3);
-    double length_y = sqrt(Y.position.x * Y.position.x + Y.position.y * Y.position.y + Y.position.z * Y.position.z);
-    Y.position.x /= length_y;
-    Y.position.y /= length_y;
-    Y.position.z /= length_y;
-
-    geometry_msgs::Pose Z = crossProdict(X, Y);
-
-    double roll  = atan2(-Z.position.y, Z.position.z);
-    double pitch = asin(Z.position.x);
-    double yaw   = atan2(-Y.position.x, X.position.x);
+    //calculate unit vector for Y axis by averaging left and right edges and normalising
+    geometry_msgs::Pose Y = ave(left, right);
+    Y = norm(Y);
+  
+    //Z axis is the crossproduct of X and Y
+    geometry_msgs::Pose Z = crossProduct(X, Y);
 
     geometry_msgs::Pose pose;
 
+    //place origin at centre of marker
     pose.position.x = p_centre.position.x;
     pose.position.y = p_centre.position.y;
     pose.position.z = p_centre.position.z;
 
-    tf2::Quaternion quaternion;
-    //<This does not work as it is from fixed frame, where as we calculated the intrinsic frame
-    ///<* @param roll Angle around X
-    ///<* @param pitch Angle around Y
-    ///<* @param yaw Angle around Z*/
-//      quaternion.setRPY(roll, pitch, yaw);  // Create this quaternion from roll/pitch/yaw (in radians)
-    ///<We calculated roll as angle around x axis, which is what setrpy uses, but seteuler defines roll as angle around z - <3 Ben
-    ///<We also calculated the rpy as intrinsic rotation
-    ///<* @param yaw Angle around Y
-    ///<* @param pitch Angle around X
-    ///<* @param roll Angle around Z
-    quaternion.setEuler(pitch, roll, yaw);  // Create this quaternion from angle around X/angle around Y/angle around Z (in radians)
+    //math to convert the rotation matrix to a quaternion
+    //rotation matrix is
+    //     [X.x Y.x Z.x ]
+    // R = [X.y Y.y Z.y ]
+    //     [X.z Y.z Z.z ]
+    // Math stolen from https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
+//[row][col]
 
-    pose.orientation.x = quaternion.x();
-    pose.orientation.y = quaternion.y();
-    pose.orientation.z = quaternion.z();
-    pose.orientation.w = quaternion.w();
-
+    //X Y Z should be rewritten into a 3x3 array 
+    float trace = X.position.x + Y.position.y + Z.position.z;
+      if( trace > 0 ) 
+      {
+        float s = 0.5f / sqrtf(trace+ 1.0f);
+        pose.orientation.w = 0.25f / s;
+        pose.orientation.x = (Y.position.z - Z.position.y ) * s;
+        pose.orientation.y = (Z.position.x - X.position.z ) * s;
+        pose.orientation.z = (X.position.y - Y.position.x ) * s;
+      } 
+      else 
+      {
+        if ( X.position.x > Y.position.y && X.position.x > Z.position.z ) 
+        {
+          float s = 2.0f * sqrtf( 1.0f + X.position.x - Y.position.y - Z.position.z);
+          pose.orientation.w = (Y.position.z - Z.position.y ) / s;
+          pose.orientation.x = 0.25f * s;
+          pose.orientation.y = (Y.position.x + X.position.y ) / s;
+          pose.orientation.z = (Z.position.x + X.position.z ) / s;
+        } 
+        else if (Y.position.y > Z.position.z) 
+        {
+          float s = 2.0f * sqrtf( 1.0f + Y.position.y - X.position.x - Z.position.z);
+          pose.orientation.w = (Z.position.x - X.position.z ) / s;
+          pose.orientation.x = (Y.position.x + X.position.y ) / s;
+          pose.orientation.y = 0.25f * s;
+          pose.orientation.z = (Y.position.z + Z.position.y ) / s;
+        } 
+        else 
+        {
+          float s = 2.0f * sqrtf( 1.0f + Z.position.z - X.position.x - Y.position.y );
+          pose.orientation.w = (X.position.y - Y.position.x ) / s;
+          pose.orientation.x = (X.position.z + Z.position.x ) / s;
+          pose.orientation.y = (Y.position.z + Z.position.y ) / s;
+          pose.orientation.z = 0.25f * s;
+        }
+    }
+  
     poses[marker_id] = pose;
   }
   return poses;
 }
+
 
 void DepthMarkerDetector::detect(Mat image, vector<int> &marker_ids, vector<vector<cv::Point2f> > &marker_corners) {
   vector<vector<cv::Point2f> > rejected_markers_;//Markers to ingore
