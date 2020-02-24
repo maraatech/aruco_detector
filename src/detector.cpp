@@ -12,16 +12,15 @@ MarkerDetector::MarkerDetector()
   this->detector_params_ = aruco::DetectorParameters::create();
 }
 
-/**
- * Attempt to detect Aruco markers/diamond in image
- * @param image
- * @param marker_ids
- * @param marker_corners
- */
 void MarkerDetector::detect(Mat image, vector<int> &marker_ids, vector<vector<cv::Point2f> > &marker_corners)
 {
   vector<vector<cv::Point2f> > rejected_markers_;//Markers to ingore
   aruco::detectMarkers(image, this->dictionary_, marker_corners, marker_ids, this->detector_params_, rejected_markers_);
+}
+
+cv::Mat getQMatrix(const maara_msgs::StereoCameraInfo stereo_info) {
+  cv::Mat Q(4, 4, CV_64FC1, (void *) stereo_info.Q.data());
+  return Q;
 }
 
 cv::Mat getCameraMatrix(const sensor_msgs::CameraInfo camera_info) {
@@ -34,7 +33,6 @@ cv::Mat getDistCoef(const sensor_msgs::CameraInfo camera_info) {
   return camera_matrix;
 }
 
-
 Matx41d aa2quaternion(const Matx31d& aa)
 {
   double angle = norm(aa);
@@ -45,12 +43,22 @@ Matx41d aa2quaternion(const Matx31d& aa)
   return q;
 }
 
-/**
- * Process the given image and return detected markers
- * @param image
- * @param display
- * @return detected markers
- */
+void displayResult(Mat image, vector<int> ids, vector<vector<cv::Point2f> > marker_corners, std::string name){
+  cv::aruco::drawDetectedMarkers(image, marker_corners, ids);
+  cv::imshow(name, image);
+  cv::waitKey(10);
+}
+
+Point getMarkerCenter(vector<Point2f> corners) {
+  float x=0, y=0;
+  for(int i=0;i<corners.size();i++)
+  {
+    x+=corners[i].x;
+    y+=corners[i].y;
+  }
+  return Point(x/4,y/4);
+}
+
 std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat image, sensor_msgs::CameraInfo camera_info, double marker_size,  bool display) {
   vector<int> ids;
   vector<vector<cv::Point2f> > marker_corners;
@@ -97,16 +105,6 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat image, sens
   }
 
   return poses;
-}
-
-Point getMarkerCenter(vector<Point2f> corners) {
-  float x=0, y=0;
-  for(int i=0;i<corners.size();i++)
-  {
-    x+=corners[i].x;
-    y+=corners[i].y;
-  }
-  return Point(x/4,y/4);
 }
 
 geometry_msgs::Pose findDepthPoint(cv::Mat depth_image, sensor_msgs::CameraInfo camera_info, int pixel_x, int pixel_y) {
@@ -198,11 +196,7 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat d
   detect(image, ids, marker_corners);
 
   if(display) {
-    Mat image_copy;
-    image.copyTo(image_copy);
-    cv::aruco::drawDetectedMarkers(image_copy, marker_corners, ids);
-    cv::imshow("Output", image_copy);
-    cv::waitKey(10);
+    displayResult(image, ids, marker_corners, "Output");
   }
 
   std::map<int, geometry_msgs::Pose> poses;
@@ -335,17 +329,6 @@ int getIndex(int id, std::vector<int> &point_ids){
     }
   }
   return -1;
-}
-
-cv::Mat getQMatrix(const maara_msgs::StereoCameraInfo stereo_info) {
-  cv::Mat Q(4, 4, CV_64FC1, (void *) stereo_info.Q.data());
-  return Q;
-}
-
-void displayResult(Mat image, vector<int> ids, vector<vector<cv::Point2f> > marker_corners, std::string name){
-  cv::aruco::drawDetectedMarkers(image, marker_corners, ids);
-  cv::imshow(name, image);
-  cv::waitKey(10);
 }
 
 std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image, Mat right_image, maara_msgs::StereoCameraInfo stereo_info, double marker_size, bool display) {
