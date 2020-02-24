@@ -2,7 +2,7 @@
 #include "ros/ros.h"
 #include <tf2/LinearMath/Quaternion.h>
 #include <rosconsole/macros_generated.h>
-#include "depth_detector.h"
+#include "../include/aruco_detector/depth_detector.h"
 
 Point DepthMarkerDetector::getMarkerCenter(vector<Point2f> corners) {
   float x=0, y=0;

@@ -3,7 +3,7 @@
 //
 
 #include <tf2/LinearMath/Quaternion.h>
-#include "detector.h"
+#include "../include/aruco_detector/detector.h"
 
 MarkerDetector::MarkerDetector()
 {

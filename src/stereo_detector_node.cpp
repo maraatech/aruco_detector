@@ -1,5 +1,5 @@
 //
-// Created by anyone on 1/03/17.
+// Created by anyone on 18/02/20.
 //
 
 #include "ros/ros.h"
@@ -25,7 +25,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/PoseArray.h>
 
-#include "../include/aruco_detector/detector.h"
+#include "../include/aruco_detector/stereo_detector.h"
 #include "../include/aruco_detector/parameters.h"
 
 using namespace cv;
@@ -34,7 +34,7 @@ using namespace cv_bridge;
 using namespace sensor_msgs;
 using namespace message_filters;
 
-MarkerDetector detector;
+StereoMarkerDetector detector;
 std::string tf_ns = "_aruco_";
 ros::Publisher pub_marker_pose;
 bool display = true;
@@ -69,34 +69,34 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
               const sensor_msgs::CameraInfoConstPtr &camera_info){
   cv::Mat image = convertToMat(image_msg);
 //  std::map<int, std::vector<cv::Point> > markers = detector.processImage(image);
-  std::map<int, geometry_msgs::Pose> markers = detector.processImages(image, *camera_info, marker_size,display);
+//  std::map<int, geometry_msgs::Pose> markers = detector.processImages(image, *camera_info, marker_size,display);
 
-  geometry_msgs::PoseArray poses;
-  poses.header.stamp = image_msg->header.stamp;
-  poses.header.frame_id = image_msg->header.frame_id;
-  for(auto marker_info : markers){
-    int id = marker_info.first;
-    geometry_msgs::Pose marker = marker_info.second;
-    poses.poses.push_back(marker);
-
-    static tf2_ros::TransformBroadcaster br;
-    geometry_msgs::TransformStamped pose_tf;
-    pose_tf.header.stamp    = image_msg->header.stamp;
-    pose_tf.header.frame_id = image_msg->header.frame_id;
-    pose_tf.child_frame_id  = tf_ns+std::to_string(id);
-
-    pose_tf.transform.translation.x = marker.position.x;
-    pose_tf.transform.translation.y = marker.position.y;
-    pose_tf.transform.translation.z = marker.position.z;
-
-    pose_tf.transform.rotation.x = marker.orientation.x;
-    pose_tf.transform.rotation.y = marker.orientation.y;
-    pose_tf.transform.rotation.z = marker.orientation.z;
-    pose_tf.transform.rotation.w = marker.orientation.w;
-
-    br.sendTransform(pose_tf);
-  }
-  pub_marker_pose.publish(poses);
+//  geometry_msgs::PoseArray poses;
+//  poses.header.stamp = image_msg->header.stamp;
+//  poses.header.frame_id = image_msg->header.frame_id;
+//  for(auto marker_info : markers){
+//    int id = marker_info.first;
+//    geometry_msgs::Pose marker = marker_info.second;
+//    poses.poses.push_back(marker);
+//
+//    static tf2_ros::TransformBroadcaster br;
+//    geometry_msgs::TransformStamped pose_tf;
+//    pose_tf.header.stamp    = image_msg->header.stamp;
+//    pose_tf.header.frame_id = image_msg->header.frame_id;
+//    pose_tf.child_frame_id  = tf_ns+std::to_string(id);
+//
+//    pose_tf.transform.translation.x = marker.position.x;
+//    pose_tf.transform.translation.y = marker.position.y;
+//    pose_tf.transform.translation.z = marker.position.z;
+//
+//    pose_tf.transform.rotation.x = marker.orientation.x;
+//    pose_tf.transform.rotation.y = marker.orientation.y;
+//    pose_tf.transform.rotation.z = marker.orientation.z;
+//    pose_tf.transform.rotation.w = marker.orientation.w;
+//
+//    br.sendTransform(pose_tf);
+//  }
+//  pub_marker_pose.publish(poses);
 }
 
 int main(int argc, char *argv[]) {
