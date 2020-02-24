@@ -25,8 +25,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/PoseArray.h>
 
-#include "../include/aruco_detector/stereo_detector.h"
 #include "../include/aruco_detector/parameters.h"
+#include "../include/aruco_detector/detector.h"
 
 using namespace cv;
 using namespace std;
@@ -34,12 +34,12 @@ using namespace cv_bridge;
 using namespace sensor_msgs;
 using namespace message_filters;
 
-StereoMarkerDetector detector;
+//StereoMarkerDetector detector;
+MarkerDetector detector;
 std::string tf_ns = "_aruco_";
 ros::Publisher pub_marker_pose;
 bool display = true;
 double marker_size;
-
 
 /**
  * Convert ROS image format to OpenCV image format

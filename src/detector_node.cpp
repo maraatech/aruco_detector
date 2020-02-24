@@ -40,7 +40,6 @@ ros::Publisher pub_marker_pose;
 bool display = true;
 double marker_size;
 
-
 /**
  * Convert ROS image format to OpenCV image format
  * @param msg ROS image

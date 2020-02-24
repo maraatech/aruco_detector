@@ -148,8 +148,8 @@ add_dependencies(detector_node ${catkin_EXPORTED_TARGETS})
 
 add_executable(depth_detector_node
         src/depth_detector_node.cpp
-        src/depth_detector.cpp
-        include/aruco_detector/depth_detector.h
+        src/detector.cpp
+        include/aruco_detector/detector.h
         include/aruco_detector/parameters.h)
 target_link_libraries(depth_detector_node
         ${OpenCV_LIBRARIES}
@@ -158,8 +158,8 @@ add_dependencies(depth_detector_node ${catkin_EXPORTED_TARGETS})
 
 add_executable(stereo_detector_node
         src/stereo_detector_node.cpp
-        src/stereo_detector.cpp
-        include/aruco_detector/stereo_detector.h
+        src/detector.cpp
+        include/aruco_detector/detector.h
         include/aruco_detector/parameters.h)
 target_link_libraries(stereo_detector_node
         ${OpenCV_LIBRARIES}
