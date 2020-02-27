@@ -365,6 +365,13 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
       Point left_centre  = getMarkerCenter(l_corners);
       Point right_centre = getMarkerCenter(r_corners);
 
+      /*
+       * MAJOR STEP MISSING!
+       *
+       * MUST RECTIFY THE POINTS BEFORE USING Q!!!
+       *
+       */
+
       geometry_msgs::Pose p_centre  = calculatePose(left_centre, right_centre, Q);
       geometry_msgs::Pose top_left  = calculatePose(l_corners[0], r_corners[0], Q);
       geometry_msgs::Pose top_right = calculatePose(l_corners[1], r_corners[1], Q);
