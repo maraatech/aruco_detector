@@ -331,6 +331,64 @@ int getIndex(int id, std::vector<int> &point_ids){
   return -1;
 }
 
+//std::vector<KeyPoint> undistortRight(const std::vector<KeyPoint>& p) {
+//  if(p.empty()) return std::vector<KeyPoint>();
+//  Mat points(p.size(),1, CV_32FC2);
+//  for(int i = 0; i < p.size(); i++) {
+//    points.at<Vec2f>(i)[0] = float(p[i].pt.x);
+//    points.at<Vec2f>(i)[1] = float(p[i].pt.y);
+//  }
+//  Mat res(p.size(),1, CV_32FC2);
+//  undistortPoints(points, res, M2_, D2_, R2_, P2_);
+//  std::vector<KeyPoint> result;
+//  result.reserve(p.size());
+//  for(int i = 0; i < p.size(); i++) {
+//    Vec2f undist = res.at<Vec2f>(i);
+//    result.push_back(p[i]);
+//    result[i].pt = Point(undist[0], undist[1]);
+//  }
+//  return result;
+//}
+//
+//std::vector<KeyPoint> undistortLeft(const std::vector<KeyPoint >& p) {
+//  if(p.empty()) return std::vector<KeyPoint >();
+//  Mat points(p.size(),1, CV_32FC2);
+//  for(int i = 0; i < p.size(); i++) {
+//    points.at<Vec2f>(i)[0] = float(p[i].pt.x);
+//    points.at<Vec2f>(i)[1] = float(p[i].pt.y);
+//  }
+//  Mat res(p.size(),1, CV_32FC2);
+//  undistortPoints(points, res, M1_, D1_, R1_, P1_);
+//  std::vector<KeyPoint > result;
+//  result.reserve(p.size());
+//  for(int i = 0; i < p.size(); i++) {
+//    Vec2f undist = res.at<Vec2f>(i);
+//    result.push_back(p[i]);
+//    result[i].pt = Point(undist[0], undist[1]);
+//  }
+//  return result;
+//}
+
+std::vector<Point2f> undistortPoints(const std::vector<Point2f >& p, Mat M, Mat D, Mat R, Mat P) {
+  if(p.empty())
+    return std::vector<Point2f >();
+  Mat points(p.size(),1, CV_32FC2);
+  for(int i = 0; i < p.size(); i++) {
+    points.at<Vec2f>(i)[0] = float(p[i].x);
+    points.at<Vec2f>(i)[1] = float(p[i].y);
+  }
+  Mat res(p.size(),1, CV_32FC2);
+  undistortPoints(points, res, M, D, R, P);
+  std::vector<Point2f > result;
+  result.reserve(p.size());
+  for(int i = 0; i < p.size(); i++) {
+    Vec2f undist = res.at<Vec2f>(i);
+    result.push_back(p[i]);
+    result[i] = Point(undist[0], undist[1]);
+  }
+  return result;
+}
+
 std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image, Mat right_image, maara_msgs::StereoCameraInfo stereo_info, double marker_size, bool display) {
 //  # Parse
 //  camera_info_msg = CameraInfo()
@@ -360,17 +418,26 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
     int r_i = getIndex(l_i, right_ids);
     if(r_i > 0){
       vector<cv::Point2f> l_corners = left_corners[l_i];
-      vector<cv::Point2f> r_corners = right_corners[r_i];
+      Point2f left_centre  = getMarkerCenter(l_corners);
 
-      Point left_centre  = getMarkerCenter(l_corners);
-      Point right_centre = getMarkerCenter(r_corners);
+      vector<cv::Point2f> r_corners = right_corners[r_i];
+      Point2f right_centre = getMarkerCenter(r_corners);
 
       /*
        * MAJOR STEP MISSING!
        *
-       * MUST RECTIFY THE POINTS BEFORE USING Q!!!
+       * MUST UNDISTORT THE POINTS BEFORE USING Q!!!
        *
        */
+      //camera matrix, dist_coeffs, R1, P1
+      Mat M1, D1, R1, P1;
+      l_corners = undistortPoints(l_corners, M1, D1, R1, P1);
+      left_centre = undistortPoints({left_centre}, M1, D1, R1, P1)[0];
+
+      Mat M2, D2, R2, P2;
+      r_corners = undistortPoints(r_corners, M2, D2, R2, P2);
+      right_centre = undistortPoints({right_centre}, M2, D2, R2, P2)[0];
+
 
       geometry_msgs::Pose p_centre  = calculatePose(left_centre, right_centre, Q);
       geometry_msgs::Pose top_left  = calculatePose(l_corners[0], r_corners[0], Q);
