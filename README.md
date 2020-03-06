@@ -22,7 +22,10 @@ Presumes you are using ~/catkin_ws as ROS workspace, if you are not make adjustm
 3) Compile all libraries
    a) cd ~/catkin_ws
    b) catkin_make
+
+4) sudo apt-get install ros-<dist>-tf-sensor-msgs 
 ```
+
 
 ### Installing
 
