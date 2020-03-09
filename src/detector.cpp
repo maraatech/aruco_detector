@@ -177,12 +177,21 @@ geometry_msgs::Pose divide(geometry_msgs::Pose p1, float p2){
   return pose;
 }
 
+double length(geometry_msgs::Pose pose){
+  double v = pose.orientation.w * pose.orientation.w + pose.orientation.x * pose.orientation.x + pose.orientation.y * pose.orientation.y + pose.orientation.z * pose.orientation.z;
+  v = sqrt(v);
+  return v;
+}
+
 geometry_msgs::Pose norm(geometry_msgs::Pose p1){
   geometry_msgs::Pose pose;
   double length = sqrt(p1.position.x * p1.position.x + p1.position.y * p1.position.y + p1.position.z * p1.position.z);
   pose.position.x = p1.position.x / length;
   pose.position.y = p1.position.y / length;
   pose.position.z = p1.position.z / length;
+  pose.orientation.w = 1.0;
+//  double q_length = length(p1);
+
   return pose;
 }
 
@@ -220,25 +229,26 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat d
       continue;
 
     //vectors that represent the direction of the edges of the square
-    geometry_msgs::Pose top  = diff(top_right, top_left);
-    geometry_msgs::Pose right = diff(top_right, bot_right);
-    geometry_msgs::Pose left = diff(top_left, bot_left);
+    geometry_msgs::Pose top     = diff(top_right, top_left);
+    geometry_msgs::Pose right   = diff(top_right, bot_right);
+    geometry_msgs::Pose left    = diff(top_left, bot_left);
     geometry_msgs::Pose bottom  = diff(bot_right, bot_left);
 
     //normalise
-    top = norm(top);
-    right = norm(right);
-    left = norm(left);
+    top    = norm(top);
+    right  = norm(right);
+    left   = norm(left);
     bottom = norm(bottom);
 
     //calculate unit vector for X axis by averaging top and bottom edges and normalising
     geometry_msgs::Pose X = ave(top, bottom);
-
+    X = norm(X);
     //calculate unit vector for Y axis by averaging left and right edges and normalising
     geometry_msgs::Pose Y = ave(left, right);
-
+    Y = norm(Y);
     //Z axis is the crossproduct of X and Y
     geometry_msgs::Pose Z = crossProduct(X, Y);
+//    Z = norm(Z);
 
     geometry_msgs::Pose pose;
 
@@ -256,10 +266,10 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat d
 //[row][col]
 
     //X Y Z should be rewritten into a 3x3 array
-    float trace = X.position.x + Y.position.y + Z.position.z;
+    double trace = X.position.x + Y.position.y + Z.position.z;
     if( trace > 0 )
     {
-      float s = 0.5f / sqrtf(trace+ 1.0f);
+      double s = 0.5f / sqrtf(trace+ 1.0f);
       pose.orientation.w = 0.25f / s;
       pose.orientation.x = (Y.position.z - Z.position.y ) * s;
       pose.orientation.y = (Z.position.x - X.position.z ) * s;
@@ -269,7 +279,7 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat d
     {
       if ( X.position.x > Y.position.y && X.position.x > Z.position.z )
       {
-        float s = 2.0f * sqrtf( 1.0f + X.position.x - Y.position.y - Z.position.z);
+        double s = 2.0f * sqrtf( 1.0f + X.position.x - Y.position.y - Z.position.z);
         pose.orientation.w = (Y.position.z - Z.position.y ) / s;
         pose.orientation.x = 0.25f * s;
         pose.orientation.y = (Y.position.x + X.position.y ) / s;
@@ -277,7 +287,7 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat d
       }
       else if (Y.position.y > Z.position.z)
       {
-        float s = 2.0f * sqrtf( 1.0f + Y.position.y - X.position.x - Z.position.z);
+        double s = 2.0f * sqrtf( 1.0f + Y.position.y - X.position.x - Z.position.z);
         pose.orientation.w = (Z.position.x - X.position.z ) / s;
         pose.orientation.x = (Y.position.x + X.position.y ) / s;
         pose.orientation.y = 0.25f * s;
@@ -285,13 +295,18 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat d
       }
       else
       {
-        float s = 2.0f * sqrtf( 1.0f + Z.position.z - X.position.x - Y.position.y );
+        double s = 2.0f * sqrtf( 1.0f + Z.position.z - X.position.x - Y.position.y );
         pose.orientation.w = (X.position.y - Y.position.x ) / s;
         pose.orientation.x = (X.position.z + Z.position.x ) / s;
         pose.orientation.y = (Y.position.z + Z.position.y ) / s;
         pose.orientation.z = 0.25f * s;
       }
     }
+    double l = length(pose);
+    pose.orientation.w = pose.orientation.w / l;
+    pose.orientation.x = pose.orientation.x / l;
+    pose.orientation.y = pose.orientation.y / l;
+    pose.orientation.z = pose.orientation.z / l;
 
     poses[marker_id] = pose;
   }
@@ -428,6 +443,7 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
        *
        * MUST UNDISTORT THE POINTS BEFORE USING Q!!!
        *
+       * Need StereoCameraInfo or undistorted image
        */
       //camera matrix, dist_coeffs, R1, P1
       Mat M1, D1, R1, P1;
@@ -492,10 +508,10 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
 //[row][col]
 
       //X Y Z should be rewritten into a 3x3 array
-      float trace = X.position.x + Y.position.y + Z.position.z;
+      double trace = X.position.x + Y.position.y + Z.position.z;
       if( trace > 0 )
       {
-        float s = 0.5f / sqrtf(trace+ 1.0f);
+        double s = 0.5f / sqrtf(trace+ 1.0f);
         pose.orientation.w = 0.25f / s;
         pose.orientation.x = (Y.position.z - Z.position.y ) * s;
         pose.orientation.y = (Z.position.x - X.position.z ) * s;
@@ -505,7 +521,7 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
       {
         if ( X.position.x > Y.position.y && X.position.x > Z.position.z )
         {
-          float s = 2.0f * sqrtf( 1.0f + X.position.x - Y.position.y - Z.position.z);
+          double s = 2.0f * sqrtf( 1.0f + X.position.x - Y.position.y - Z.position.z);
           pose.orientation.w = (Y.position.z - Z.position.y ) / s;
           pose.orientation.x = 0.25f * s;
           pose.orientation.y = (Y.position.x + X.position.y ) / s;
@@ -513,7 +529,7 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
         }
         else if (Y.position.y > Z.position.z)
         {
-          float s = 2.0f * sqrtf( 1.0f + Y.position.y - X.position.x - Z.position.z);
+          double s = 2.0f * sqrtf( 1.0f + Y.position.y - X.position.x - Z.position.z);
           pose.orientation.w = (Z.position.x - X.position.z ) / s;
           pose.orientation.x = (Y.position.x + X.position.y ) / s;
           pose.orientation.y = 0.25f * s;
@@ -521,15 +537,13 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
         }
         else
         {
-          float s = 2.0f * sqrtf( 1.0f + Z.position.z - X.position.x - Y.position.y );
+          double s = 2.0f * sqrtf( 1.0f + Z.position.z - X.position.x - Y.position.y );
           pose.orientation.w = (X.position.y - Y.position.x ) / s;
           pose.orientation.x = (X.position.z + Z.position.x ) / s;
           pose.orientation.y = (Y.position.z + Z.position.y ) / s;
           pose.orientation.z = 0.25f * s;
         }
       }
-
-      poses[marker_id] = pose;
     }
   }
 
