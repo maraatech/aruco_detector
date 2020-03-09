@@ -303,11 +303,11 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat d
       }
     }
     double l = length(pose);
+
     pose.orientation.w = pose.orientation.w / l;
     pose.orientation.x = pose.orientation.x / l;
     pose.orientation.y = pose.orientation.y / l;
     pose.orientation.z = pose.orientation.z / l;
-
     poses[marker_id] = pose;
   }
   return poses;
