@@ -24,6 +24,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/PoseArray.h>
+#include <maara_msgs/StereoCameraInfo.h>
 
 #include "../include/aruco_detector/parameters.h"
 #include "../include/aruco_detector/detector.h"
@@ -65,9 +66,10 @@ Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
   }
 }
 
-void callback(const sensor_msgs::ImageConstPtr &image_msg,
-              const sensor_msgs::CameraInfoConstPtr &camera_info){
-  cv::Mat image = convertToMat(image_msg);
+void callback(const sensor_msgs::ImageConstPtr &image_left_msg,
+              const sensor_msgs::ImageConstPtr &image_right_msg,
+              const maara_msgs::StereoCameraInfoConstPtr &camera_info){
+//  cv::Mat image = convertToMat(image_msg);
 //  std::map<int, std::vector<cv::Point> > markers = detector.processImage(image);
 //  std::map<int, geometry_msgs::Pose> markers = detector.processImages(image, *camera_info, marker_size,display);
 
@@ -107,9 +109,13 @@ int main(int argc, char *argv[]) {
 
   ///<Subscriber
   //Rail Status
-  std::string image, marker, camera_info, tf_prefix;
-  if(!nh_private.getParam(cares::marker::IMAGE_S, image)){
-    ROS_ERROR((cares::marker::IMAGE_S + " not set.").c_str());
+  std::string image_left, image_right, marker, stereo_info, tf_prefix;
+  if(!nh_private.getParam(cares::marker::IMAGE_LEFT_S, image_left)){
+    ROS_ERROR((cares::marker::IMAGE_LEFT_S + " not set.").c_str());
+    return 0;
+  }
+  if(!nh_private.getParam(cares::marker::IMAGE_RIGHT_S, image_right)){
+    ROS_ERROR((cares::marker::IMAGE_RIGHT_S + " not set.").c_str());
     return 0;
   }
   if(!nh_private.getParam(cares::marker::MARKERS_S, marker)){
@@ -117,12 +123,13 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   ROS_INFO(marker.c_str());
-  ROS_INFO(image.c_str());
-  if(!nh_private.getParam(cares::marker::CAMERA_INFO_S, camera_info)){
-    ROS_ERROR((cares::marker::CAMERA_INFO_S + " not set.").c_str());
+  ROS_INFO(image_left.c_str());
+  ROS_INFO(image_right.c_str());
+  if(!nh_private.getParam(cares::marker::STEREO_INFO_S, stereo_info)){
+    ROS_ERROR((cares::marker::STEREO_INFO_S + " not set.").c_str());
     return 0;
   }
-  ROS_INFO(camera_info.c_str());
+  ROS_INFO(stereo_info.c_str());
   if(!nh_private.getParam(cares::marker::MARKER_SIZE_D, marker_size)){
     ROS_ERROR((cares::marker::MARKER_SIZE_D + " not set.").c_str());
     return 0;
@@ -136,12 +143,13 @@ int main(int argc, char *argv[]) {
   ROS_INFO(tf_ns.c_str());
   nh_private.param(cares::marker::DISPLAY_B, display, true);
 
-  Subscriber<sensor_msgs::Image> image_sub(nh, image, 1);
-  Subscriber<sensor_msgs::CameraInfo> camera_info_sub(nh, camera_info, 1);
+  Subscriber<sensor_msgs::Image> image_left_sub(nh, image_left, 1);
+  Subscriber<sensor_msgs::Image> image_right_sub(nh, image_right, 1);
+  Subscriber<maara_msgs::StereoCameraInfo> camera_info_sub(nh, stereo_info, 1);
 
-  typedef sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::CameraInfo> SyncPolicy;
-  Synchronizer<SyncPolicy> sync_three(SyncPolicy(10), image_sub, camera_info_sub);
-  sync_three.registerCallback(boost::bind(callback, _1, _2));
+  typedef sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, maara_msgs::StereoCameraInfo> SyncPolicy;
+  Synchronizer<SyncPolicy> synchronizer(SyncPolicy(10), image_left_sub, image_right_sub, camera_info_sub);
+  synchronizer.registerCallback(callback);
 
   pub_marker_pose = nh.advertise<geometry_msgs::PoseArray>(marker, 10);
 
