@@ -23,7 +23,7 @@ public:
     MarkerDetector();
 
     //Stereo Detection
-    std::map<int, geometry_msgs::Pose> processImages(Mat left_image, Mat right_image, maara_msgs::StereoCameraInfo stereo_info, double marker_size, bool display);
+    std::map<int, geometry_msgs::Pose> processImages(Mat left_image, Mat right_image, maara_msgs::StereoCameraInfo stereo_info, bool display);
     //Single Image
     std::map<int, geometry_msgs::Pose> processImages(Mat image, sensor_msgs::CameraInfo camera_info, double marker_size, bool display);
     //Depth Detection

@@ -404,7 +404,7 @@ std::vector<Point2f> undistortPoints(const std::vector<Point2f >& p, Mat M, Mat 
   return result;
 }
 
-std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image, Mat right_image, maara_msgs::StereoCameraInfo stereo_info, double marker_size, bool display) {
+std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image, Mat right_image, maara_msgs::StereoCameraInfo stereo_info, bool display) {
 //  # Parse
 //  camera_info_msg = CameraInfo()
 //  camera_info_msg.width = calib_data["image_width"]
@@ -554,5 +554,3 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
 
   return poses;
 }
-
-
