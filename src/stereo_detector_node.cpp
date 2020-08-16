@@ -74,7 +74,7 @@ void callback(const sensor_msgs::ImageConstPtr &image_left_msg,
 
   sensor_msgs::CameraInfo left_camera_info = stereo_camera_info->left_info;
 
-  std::map<int, geometry_msgs::Pose> markers = detector.processImages(image_left, image_right, *stereo_camera_info, true);
+  std::map<int, geometry_msgs::Pose> markers = detector.processImages(image_left, image_right, *stereo_camera_info, false);
 
 
  geometry_msgs::PoseArray poses;

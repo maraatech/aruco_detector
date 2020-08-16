@@ -45,7 +45,9 @@ Matx41d aa2quaternion(const Matx31d& aa)
 
 void displayResult(Mat image, vector<int> ids, vector<vector<cv::Point2f> > marker_corners, std::string name){
   cv::aruco::drawDetectedMarkers(image, marker_corners, ids);
-  cv::imshow(name, image);
+  Mat dst;
+  cv::resize(image, dst, cv::Size(640, 480), 0, 0, INTER_CUBIC);
+  cv::imshow(name, dst);
   cv::waitKey(10);
 }
 
@@ -431,7 +433,8 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
     int marker_id = left_ids[l_i];
 
     int r_i = getIndex(l_i, right_ids);
-    if(r_i > 0){
+    if(r_i >= 0){
+
       vector<cv::Point2f> l_corners = left_corners[l_i];
       Point2f left_centre  = getMarkerCenter(l_corners);
 
@@ -445,14 +448,16 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
        *
        * Need StereoCameraInfo or undistorted image
        */
-      //camera matrix, dist_coeffs, R1, P1
-      Mat M1, D1, R1, P1;
-      l_corners = undistortPoints(l_corners, M1, D1, R1, P1);
-      left_centre = undistortPoints({left_centre}, M1, D1, R1, P1)[0];
 
-      Mat M2, D2, R2, P2;
-      r_corners = undistortPoints(r_corners, M2, D2, R2, P2);
-      right_centre = undistortPoints({right_centre}, M2, D2, R2, P2)[0];
+
+      //camera matrix, dist_coeffs, R1, P1
+      // Mat M1, D1, R1, P1;
+      // l_corners = undistortPoints(l_corners, M1, D1, R1, P1);
+      // left_centre = undistortPoints({left_centre}, M1, D1, R1, P1)[0];
+      //
+      // Mat M2, D2, R2, P2;
+      // r_corners = undistortPoints(r_corners, M2, D2, R2, P2);
+      // right_centre = undistortPoints({right_centre}, M2, D2, R2, P2)[0];
 
 
       geometry_msgs::Pose p_centre  = calculatePose(left_centre, right_centre, Q);
@@ -544,6 +549,7 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
           pose.orientation.z = 0.25f * s;
         }
       }
+      poses[marker_id] = pose;
     }
   }
 
