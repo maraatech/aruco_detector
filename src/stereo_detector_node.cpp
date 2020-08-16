@@ -68,37 +68,41 @@ Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
 
 void callback(const sensor_msgs::ImageConstPtr &image_left_msg,
               const sensor_msgs::ImageConstPtr &image_right_msg,
-              const maara_msgs::StereoCameraInfoConstPtr &camera_info){
-//  cv::Mat image = convertToMat(image_msg);
-//  std::map<int, std::vector<cv::Point> > markers = detector.processImage(image);
-//  std::map<int, geometry_msgs::Pose> markers = detector.processImages(image, *camera_info, marker_size,display);
+              const maara_msgs::StereoCameraInfoConstPtr &stereo_camera_info){
+  cv::Mat image_left = convertToMat(image_left_msg);
+  cv::Mat image_right = convertToMat(image_right_msg);
 
-//  geometry_msgs::PoseArray poses;
-//  poses.header.stamp = image_msg->header.stamp;
-//  poses.header.frame_id = image_msg->header.frame_id;
-//  for(auto marker_info : markers){
-//    int id = marker_info.first;
-//    geometry_msgs::Pose marker = marker_info.second;
-//    poses.poses.push_back(marker);
-//
-//    static tf2_ros::TransformBroadcaster br;
-//    geometry_msgs::TransformStamped pose_tf;
-//    pose_tf.header.stamp    = image_msg->header.stamp;
-//    pose_tf.header.frame_id = image_msg->header.frame_id;
-//    pose_tf.child_frame_id  = tf_ns+std::to_string(id);
-//
-//    pose_tf.transform.translation.x = marker.position.x;
-//    pose_tf.transform.translation.y = marker.position.y;
-//    pose_tf.transform.translation.z = marker.position.z;
-//
-//    pose_tf.transform.rotation.x = marker.orientation.x;
-//    pose_tf.transform.rotation.y = marker.orientation.y;
-//    pose_tf.transform.rotation.z = marker.orientation.z;
-//    pose_tf.transform.rotation.w = marker.orientation.w;
-//
-//    br.sendTransform(pose_tf);
-//  }
-//  pub_marker_pose.publish(poses);
+  sensor_msgs::CameraInfo left_camera_info = stereo_camera_info->left_info;
+
+  std::map<int, geometry_msgs::Pose> markers = detector.processImages(image_left, image_right, *stereo_camera_info, true);
+
+
+ geometry_msgs::PoseArray poses;
+ poses.header.stamp = image_left_msg->header.stamp;
+ poses.header.frame_id = image_left_msg->header.frame_id;
+ for(auto marker_info : markers){
+   int id = marker_info.first;
+   geometry_msgs::Pose marker = marker_info.second;
+   poses.poses.push_back(marker);
+
+   static tf2_ros::TransformBroadcaster br;
+   geometry_msgs::TransformStamped pose_tf;
+   pose_tf.header.stamp    = image_left_msg->header.stamp;
+   pose_tf.header.frame_id = image_left_msg->header.frame_id;
+   pose_tf.child_frame_id  = tf_ns+std::to_string(id);
+
+   pose_tf.transform.translation.x = marker.position.x;
+   pose_tf.transform.translation.y = marker.position.y;
+   pose_tf.transform.translation.z = marker.position.z;
+
+   pose_tf.transform.rotation.x = marker.orientation.x;
+   pose_tf.transform.rotation.y = marker.orientation.y;
+   pose_tf.transform.rotation.z = marker.orientation.z;
+   pose_tf.transform.rotation.w = marker.orientation.w;
+
+   br.sendTransform(pose_tf);
+ }
+ pub_marker_pose.publish(poses);
 }
 
 int main(int argc, char *argv[]) {
