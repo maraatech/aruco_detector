@@ -17,7 +17,6 @@
 #include "geometry_msgs/PointStamped.h"
 #include "geometry_msgs/PoseArray.h"
 #include "geometry_msgs/Pose.h"
-#include "depth_detector.h"
 #include <sensor_msgs/CameraInfo.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -25,7 +24,9 @@
 #include <tf2/transform_datatypes.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include "parameters.h"
+#include "../include/aruco_detector/parameters.h"
+//#include "../include/aruco_detector/depth_detector.h"
+#include "../include/aruco_detector/detector.h"
 
 using namespace cv;
 using namespace std;
@@ -33,7 +34,8 @@ using namespace cv_bridge;
 using namespace sensor_msgs;
 using namespace message_filters;
 
-DepthMarkerDetector detector;
+//DepthMarkerDetector detector;
+MarkerDetector detector;
 std::string tf_ns = "_aruco_";
 ros::Publisher pub_marker_pose;
 bool display = true;

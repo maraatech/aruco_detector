@@ -14,7 +14,18 @@ Presumes you are using ~/catkin_ws as ROS workspace, if you are not make adjustm
 
 ```
 1) ROS Melodic (no known reason why future versions will not work at this stage, Kenitic works fine too)
+
+2) Pull master version of maara_msgs
+   a) cd ~/catkin_ws/src
+   b) git clone https://github.com/maraatech/maara_msgs.git
+   
+3) Compile all libraries
+   a) cd ~/catkin_ws
+   b) catkin_make
+
+4) sudo apt-get install ros-<dist>-tf-sensor-msgs 
 ```
+
 
 ### Installing
 
@@ -193,6 +204,35 @@ Marker array publisher
 Display detection results on screen
 ```
 <param name="display"       value="$(arg display)"/>
+```
+
+### Stereo Detector
+
+ROS node that will detect aruco markers in stereo RGB data and publish the pose transform relative to the left frame.
+
+##### Subscribed Topics
+Topic names are all default names, they can be changed via setting parameters in the launch file.
+
+* sensor_msgs::Image
+  * Left RGB image: /camera/color/image_raw
+  * Right RGB image: /camera/color/image_raw
+* maara_msgs::StereoInfo
+  * Stereo Info: /stereo/stereo_info
+
+##### Published Topics
+Topic names are all default names, they can be changed via setting parameters in the launch file.
+
+* geometry_msgs::PoseArray
+  * Marker Poses : markers
+
+##### Broadcast Transforms
+Broadcast pose of the markers
+* geometry_msgs::TransformStamped
+  * Pose of each marker N: "camera_aruco_N"
+
+###### Launch File
+```
+roslaunch aruco_detector stereo_detector.launch
 ```
 
 ## Version

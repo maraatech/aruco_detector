@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   geometry_msgs
   sensor_msgs
+  maara_msgs
 )
 
 find_package(OpenCV REQUIRED)
@@ -138,8 +139,8 @@ include_directories(
 add_executable(detector_node
         src/detector_node.cpp
         src/detector.cpp
-        src/detector.h
-        src/parameters.h)
+        include/aruco_detector/detector.h
+        include/aruco_detector/parameters.h)
 target_link_libraries(detector_node
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
@@ -147,13 +148,23 @@ add_dependencies(detector_node ${catkin_EXPORTED_TARGETS})
 
 add_executable(depth_detector_node
         src/depth_detector_node.cpp
-        src/depth_detector.cpp
-        src/depth_detector.h
-        src/parameters.h)
+        src/detector.cpp
+        include/aruco_detector/detector.h
+        include/aruco_detector/parameters.h)
 target_link_libraries(depth_detector_node
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
 add_dependencies(depth_detector_node ${catkin_EXPORTED_TARGETS})
+
+add_executable(stereo_detector_node
+        src/stereo_detector_node.cpp
+        src/detector.cpp
+        include/aruco_detector/detector.h
+        include/aruco_detector/parameters.h)
+target_link_libraries(stereo_detector_node
+        ${OpenCV_LIBRARIES}
+        ${catkin_LIBRARIES})
+add_dependencies(stereo_detector_node ${catkin_EXPORTED_TARGETS})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries

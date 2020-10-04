@@ -10,6 +10,9 @@
 namespace cares {
     namespace marker{
         const std::string IMAGE_S       = "image";
+        const std::string IMAGE_LEFT_S  = "image_left";
+        const std::string IMAGE_RIGHT_S = "image_right";
+        const std::string STEREO_INFO_S = "stereo_info";
         const std::string MARKERS_S     = "markers";
         const std::string DEPTH_IMAGE_S = "depth_image";
         const std::string CAMERA_INFO_S = "camera_info";
