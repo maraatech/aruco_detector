@@ -235,6 +235,53 @@ Broadcast pose of the markers
 roslaunch aruco_detector stereo_detector.launch
 ```
 
+```xml
+<?xml version="1.0"?>
+<launch>
+  <arg name="ns"            default="camera"/>
+  <arg name="image_left"    default="/camera_array/stereo1/left/image_color_rect"/>
+  <arg name="image_right"   default="/camera_array/stereo1/right/image_color_rect"/>
+  <arg name="markers"       default="markers"/>
+  <arg name="stereo_info"   default="/camera_array/stereo1/stereo_info"/>
+  <arg name="display"       default="true"/>
+
+  <group ns="$(arg ns)">
+      <node name="stereo_detector_node" pkg="aruco_detector" type="stereo_detector_node" output="screen">
+        <param name="image_left"    value="$(arg image_left)" />
+        <param name="image_right"   value="$(arg image_right)" />
+        <param name="markers"       value="$(arg markers)"/>
+        <param name="stereo_info"   value="$(arg stereo_info)" />
+        <param name="tf_prefix"     value="$(arg ns)" />
+        <param name="display"       value="$(arg display)"/>
+      </node>
+   </group>
+</launch>
+```
+
+Name space that the node operates in. 
+
+```
+<arg name="ns"            default="camera"/>
+```
+
+RGB Images, and stereo camera info topics to subscribe to.
+
+```
+<arg name="image_left"    default="/camera_array/stereo1/left/image_color_rect"/>
+<arg name="image_right"   default="/camera_array/stereo1/right/image_color_rect"/>
+<arg name="stereo_info"   default="/camera_array/stereo1/stereo_info"/>
+```
+
+Marker array publisher
+```
+<arg name="markers"       default="markers"/>
+```
+
+Display detection results on screen
+```
+<param name="display"       value="$(arg display)"/>
+```
+
 ## Version
 
 Version 1.0

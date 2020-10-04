@@ -40,7 +40,6 @@ MarkerDetector detector;
 std::string tf_ns = "_aruco_";
 ros::Publisher pub_marker_pose;
 bool display = true;
-double marker_size;
 
 /**
  * Convert ROS image format to OpenCV image format
@@ -134,11 +133,6 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   ROS_INFO(stereo_info.c_str());
-  if(!nh_private.getParam(cares::marker::MARKER_SIZE_D, marker_size)){
-    ROS_ERROR((cares::marker::MARKER_SIZE_D + " not set.").c_str());
-    return 0;
-  }
-  ROS_INFO(std::to_string(marker_size).c_str());
   if(!nh_private.getParam(cares::marker::TF_PREFIX_S, tf_prefix)){
     ROS_ERROR((cares::marker::TF_PREFIX_S + " not set.").c_str());
     return 0;
