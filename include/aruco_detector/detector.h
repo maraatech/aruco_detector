@@ -25,9 +25,9 @@ public:
     //Stereo Detection
     std::map<int, geometry_msgs::Pose> processImages(Mat left_image, Mat right_image, maara_msgs::StereoCameraInfo stereo_info, bool display);
     //Single Image
-    std::map<int, geometry_msgs::Pose> processImages(Mat image, sensor_msgs::CameraInfo camera_info, double marker_size, bool display);
+    std::map<int, geometry_msgs::Pose> processImage(Mat image, sensor_msgs::CameraInfo camera_info, double marker_size, bool display);
     //Depth Detection
-    std::map<int, geometry_msgs::Pose> processImage(Mat image, Mat depth_image, sensor_msgs::CameraInfo camera_info, bool display);
+    std::map<int, geometry_msgs::Pose> processImage(Mat image, Mat depth_image, sensor_msgs::CameraInfo camera_info, bool display, bool is_depth_in_meters=false);
 
 private:
 

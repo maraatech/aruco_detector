@@ -39,7 +39,7 @@ MarkerDetector detector;
 std::string tf_ns = "_aruco_";
 ros::Publisher pub_marker_pose;
 bool display = true;
-
+bool is_depth_in_meters = false;
 /**
  * Convert ROS image format to OpenCV image format
  * @param msg ROS image
@@ -69,7 +69,7 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
               const sensor_msgs::CameraInfoConstPtr &camera_info){
   cv::Mat image = convertToMat(image_msg);
   cv::Mat depth_image = convertToMat(depth_image_msg);
-  std::map<int, geometry_msgs::Pose> markers = detector.processImage(image, depth_image, *camera_info, display);
+  std::map<int, geometry_msgs::Pose> markers = detector.processImage(image, depth_image, *camera_info, display, is_depth_in_meters);
 
   geometry_msgs::PoseArray poses;
   poses.header.stamp = depth_image_msg->header.stamp;
@@ -134,6 +134,12 @@ int main(int argc, char *argv[]) {
   }
   tf_ns = tf_prefix + tf_ns;
   ROS_INFO(tf_ns.c_str());
+  
+  nh_private.param(cares::marker::IS_DEPTH_IN_METERS, is_depth_in_meters, false);
+  std::string t = "Depth data expected in ";
+  t += is_depth_in_meters ? "m" : "mm";
+  ROS_INFO(t.c_str());
+
   nh_private.param(cares::marker::DISPLAY_B, display, true);
 
   Subscriber<sensor_msgs::Image> image_sub(nh, image, 1);

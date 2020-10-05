@@ -8,7 +8,8 @@
 MarkerDetector::MarkerDetector()
 {
 //  this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_6X6_250);
-  this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_4X4_50);
+  // this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_4X4_50);
+  this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_4X4_250);
   this->detector_params_ = aruco::DetectorParameters::create();
 }
 
@@ -61,7 +62,7 @@ Point getMarkerCenter(vector<Point2f> corners) {
   return Point(x/4,y/4);
 }
 
-std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat image, sensor_msgs::CameraInfo camera_info, double marker_size,  bool display) {
+std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, sensor_msgs::CameraInfo camera_info, double marker_size,  bool display) {
   vector<int> ids;
   vector<vector<cv::Point2f> > marker_corners;
   detect(image, ids, marker_corners);
@@ -109,18 +110,41 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat image, sens
   return poses;
 }
 
-geometry_msgs::Pose findDepthPoint(cv::Mat depth_image, sensor_msgs::CameraInfo camera_info, int pixel_x, int pixel_y) {
+geometry_msgs::Pose findDepthPoint(cv::Mat depth_image, sensor_msgs::CameraInfo camera_info, int pixel_x, int pixel_y, double is_depth_in_meters) {
   //#     [fx  0 cx]
   //# K = [ 0 fy cy]
   //#     [ 0  0  1]
-  double z = depth_image.at<unsigned short>(pixel_y, pixel_x);
+
+  double z = 0.0;
+  if (is_depth_in_meters){
+    double max_z = 1000.0;
+    int offset_y = 0; 
+    int offset_x = 0;
+    int num_pts = 0;
+    int max_abs_offset = 30;
+    for(int i=-max_abs_offset; i < max_abs_offset + 1; i++) {
+      for(int j=-max_abs_offset; j < max_abs_offset + 1; j++) {
+        double z_nn = (double)depth_image.at<float>(pixel_y + i, pixel_x + j);
+        if(z_nn == z_nn) {
+          z += z_nn;
+          num_pts++;
+        }
+      }
+    }
+    z /= num_pts;
+  }
+  else{
+    z = (double)depth_image.at<unsigned short>(pixel_y, pixel_x);
+  }
 
   double x = (pixel_x - camera_info.K.at(2)) / camera_info.K.at(0);
   double y = (pixel_y - camera_info.K.at(5)) / camera_info.K.at(4);
 
-  x = x * z / 1000.0;//mm -> m
-  y = y * z / 1000.0;//mm -> m
-  z = z / 1000.0;//mm -> m
+  if(!is_depth_in_meters){
+    x = x * z / 1000.0;//mm -> m
+    y = y * z / 1000.0;//mm -> m
+    z = z / 1000.0;//mm -> m
+  }
 
   geometry_msgs::Pose pose_goal;
   pose_goal.position.x = x;
@@ -201,7 +225,7 @@ bool isValid(geometry_msgs::Pose pose){
   return pose.position.z > 0;
 }
 
-std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat depth_image, sensor_msgs::CameraInfo camera_info,  bool display) {
+std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat depth_image, sensor_msgs::CameraInfo camera_info,  bool display, bool is_depth_in_meters) {
   vector<int> ids;
   vector<vector<cv::Point2f> > marker_corners;
   detect(image, ids, marker_corners);
@@ -221,11 +245,11 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat d
     cv::Point c4 = marker_corners[index][3];
 
     //find depth point for each corner + centre
-    geometry_msgs::Pose p_centre  = findDepthPoint(depth_image, camera_info, centre.x, centre.y);
-    geometry_msgs::Pose top_left  = findDepthPoint(depth_image, camera_info, c1.x, c1.y);
-    geometry_msgs::Pose top_right = findDepthPoint(depth_image, camera_info, c2.x, c2.y);
-    geometry_msgs::Pose bot_right = findDepthPoint(depth_image, camera_info, c3.x, c3.y);
-    geometry_msgs::Pose bot_left  = findDepthPoint(depth_image, camera_info, c4.x, c4.y);
+    geometry_msgs::Pose p_centre  = findDepthPoint(depth_image, camera_info, centre.x, centre.y, is_depth_in_meters);
+    geometry_msgs::Pose top_left  = findDepthPoint(depth_image, camera_info, c1.x, c1.y, is_depth_in_meters);
+    geometry_msgs::Pose top_right = findDepthPoint(depth_image, camera_info, c2.x, c2.y, is_depth_in_meters);
+    geometry_msgs::Pose bot_right = findDepthPoint(depth_image, camera_info, c3.x, c3.y, is_depth_in_meters);
+    geometry_msgs::Pose bot_left  = findDepthPoint(depth_image, camera_info, c4.x, c4.y, is_depth_in_meters);
 
     if (!isValid(top_left) || !isValid(top_right) || !isValid(bot_right) || !isValid(bot_left))
       continue;
@@ -386,38 +410,27 @@ int getIndex(int id, std::vector<int> &point_ids){
 //  return result;
 //}
 
-std::vector<Point2f> undistortPoints(const std::vector<Point2f >& p, Mat M, Mat D, Mat R, Mat P) {
-  if(p.empty())
-    return std::vector<Point2f >();
-  Mat points(p.size(),1, CV_32FC2);
-  for(int i = 0; i < p.size(); i++) {
-    points.at<Vec2f>(i)[0] = float(p[i].x);
-    points.at<Vec2f>(i)[1] = float(p[i].y);
-  }
-  Mat res(p.size(),1, CV_32FC2);
-  undistortPoints(points, res, M, D, R, P);
-  std::vector<Point2f > result;
-  result.reserve(p.size());
-  for(int i = 0; i < p.size(); i++) {
-    Vec2f undist = res.at<Vec2f>(i);
-    result.push_back(p[i]);
-    result[i] = Point(undist[0], undist[1]);
-  }
-  return result;
-}
+// std::vector<Point2f> undistortPoints(const std::vector<Point2f >& p, Mat M, Mat D, Mat R, Mat P) {
+//   if(p.empty())
+//     return std::vector<Point2f >();
+//   Mat points(p.size(),1, CV_32FC2);
+//   for(int i = 0; i < p.size(); i++) {
+//     points.at<Vec2f>(i)[0] = float(p[i].x);
+//     points.at<Vec2f>(i)[1] = float(p[i].y);
+//   }
+//   Mat res(p.size(),1, CV_32FC2);
+//   undistortPoints(points, res, M, D, R, P);
+//   std::vector<Point2f > result;
+//   result.reserve(p.size());
+//   for(int i = 0; i < p.size(); i++) {
+//     Vec2f undist = res.at<Vec2f>(i);
+//     result.push_back(p[i]);
+//     result[i] = Point(undist[0], undist[1]);
+//   }
+//   return result;
+// }
 
 std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image, Mat right_image, maara_msgs::StereoCameraInfo stereo_info, bool display) {
-//  # Parse
-//  camera_info_msg = CameraInfo()
-//  camera_info_msg.width = calib_data["image_width"]
-//  camera_info_msg.height = calib_data["image_height"]
-//  camera_info_msg.K = calib_data["camera_matrix"]["data"]
-//  camera_info_msg.D = calib_data["distortion_coefficients"]["data"]
-//  camera_info_msg.R = calib_data["rectification_matrix"]["data"]
-//  camera_info_msg.P = calib_data["projection_matrix"]["data"]
-//  camera_info_msg.distortion_model = calib_data["distortion_model"]
-//  return camera_info_msg
-
   vector<int> left_ids;
   vector<vector<cv::Point2f> > left_corners;
   detect(left_image, left_ids, left_corners);
@@ -448,7 +461,6 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
        *
        * Need StereoCameraInfo or undistorted image
        */
-
 
       //camera matrix, dist_coeffs, R1, P1
       // Mat M1, D1, R1, P1;

@@ -19,6 +19,7 @@ namespace cares {
         const std::string MARKER_SIZE_D = "marker_size";
         const std::string TF_PREFIX_S   = "tf_prefix";
         const std::string DISPLAY_B     = "display";
+        const std::string IS_DEPTH_IN_METERS    = "is_depth_in_meters";
     }
 }
 

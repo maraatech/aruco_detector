@@ -68,7 +68,7 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
               const sensor_msgs::CameraInfoConstPtr &camera_info){
   cv::Mat image = convertToMat(image_msg);
 //  std::map<int, std::vector<cv::Point> > markers = detector.processImage(image);
-  std::map<int, geometry_msgs::Pose> markers = detector.processImages(image, *camera_info, marker_size,display);
+  std::map<int, geometry_msgs::Pose> markers = detector.processImage(image, *camera_info, marker_size,display);
 
   geometry_msgs::PoseArray poses;
   poses.header.stamp = image_msg->header.stamp;

@@ -213,7 +213,7 @@ ROS node that will detect aruco markers in stereo RGB data and publish the pose 
 ##### Subscribed Topics
 Topic names are all default names, they can be changed via setting parameters in the launch file.
 
-* sensor_msgs::Image
+* sensor_msgs::Image - NOTE must be rectified images
   * Left RGB image: /camera/color/image_raw
   * Right RGB image: /camera/color/image_raw
 * maara_msgs::StereoInfo
@@ -239,8 +239,8 @@ roslaunch aruco_detector stereo_detector.launch
 <?xml version="1.0"?>
 <launch>
   <arg name="ns"            default="camera"/>
-  <arg name="image_left"    default="/camera_array/stereo1/left/image_color_rect"/>
-  <arg name="image_right"   default="/camera_array/stereo1/right/image_color_rect"/>
+  <arg name="image_left"    default="left/image_color_rect"/>
+  <arg name="image_right"   default="right/image_color_rect"/>
   <arg name="markers"       default="markers"/>
   <arg name="stereo_info"   default="/camera_array/stereo1/stereo_info"/>
   <arg name="display"       default="true"/>
@@ -264,11 +264,11 @@ Name space that the node operates in.
 <arg name="ns"            default="camera"/>
 ```
 
-RGB Images, and stereo camera info topics to subscribe to.
+Rectified RGB Images, and stereo camera info topics to subscribe to.
 
 ```
-<arg name="image_left"    default="/camera_array/stereo1/left/image_color_rect"/>
-<arg name="image_right"   default="/camera_array/stereo1/right/image_color_rect"/>
+<arg name="image_left"    default="left/image_color_rect"/>
+  <arg name="image_right"   default="right/image_color_rect"/>
 <arg name="stereo_info"   default="/camera_array/stereo1/stereo_info"/>
 ```
 
