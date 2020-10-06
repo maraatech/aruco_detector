@@ -71,10 +71,7 @@ void callback(const sensor_msgs::ImageConstPtr &image_left_msg,
   cv::Mat image_left = convertToMat(image_left_msg);
   cv::Mat image_right = convertToMat(image_right_msg);
 
-  sensor_msgs::CameraInfo left_camera_info = stereo_camera_info->left_info;
-
   std::map<int, geometry_msgs::Pose> markers = detector.processImages(image_left, image_right, *stereo_camera_info, false);
-
 
  geometry_msgs::PoseArray poses;
  poses.header.stamp = image_left_msg->header.stamp;

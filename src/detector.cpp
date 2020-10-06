@@ -2,9 +2,10 @@
 // Created by anyone on 12/02/20.
 //
 
-#include <tf2/LinearMath/Quaternion.h>
 #include "../include/aruco_detector/detector.h"
+#include <tf2/LinearMath/Quaternion.h>
 
+//TODO add parameter to change marker type to be detected
 MarkerDetector::MarkerDetector()
 {
 //  this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_6X6_250);
@@ -30,8 +31,8 @@ cv::Mat getCameraMatrix(const sensor_msgs::CameraInfo camera_info) {
 }
 
 cv::Mat getDistCoef(const sensor_msgs::CameraInfo camera_info) {
-  cv::Mat camera_matrix(1, 5, CV_64FC1, (void *) camera_info.D.data());
-  return camera_matrix;
+  cv::Mat dist_coeffs(1, 5, CV_64FC1, (void *) camera_info.D.data());
+  return dist_coeffs;
 }
 
 Matx41d aa2quaternion(const Matx31d& aa)
@@ -117,21 +118,7 @@ geometry_msgs::Pose findDepthPoint(cv::Mat depth_image, sensor_msgs::CameraInfo 
 
   double z = 0.0;
   if (is_depth_in_meters){
-    double max_z = 1000.0;
-    int offset_y = 0; 
-    int offset_x = 0;
-    int num_pts = 0;
-    int max_abs_offset = 30;
-    for(int i=-max_abs_offset; i < max_abs_offset + 1; i++) {
-      for(int j=-max_abs_offset; j < max_abs_offset + 1; j++) {
-        double z_nn = (double)depth_image.at<float>(pixel_y + i, pixel_x + j);
-        if(z_nn == z_nn) {
-          z += z_nn;
-          num_pts++;
-        }
-      }
-    }
-    z /= num_pts;
+    z = (double)depth_image.at<float>(pixel_y, pixel_x);
   }
   else{
     z = (double)depth_image.at<unsigned short>(pixel_y, pixel_x);
@@ -225,36 +212,8 @@ bool isValid(geometry_msgs::Pose pose){
   return pose.position.z > 0;
 }
 
-std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat depth_image, sensor_msgs::CameraInfo camera_info,  bool display, bool is_depth_in_meters) {
-  vector<int> ids;
-  vector<vector<cv::Point2f> > marker_corners;
-  detect(image, ids, marker_corners);
-
-  if(display) {
-    displayResult(image, ids, marker_corners, "Output");
-  }
-
-  std::map<int, geometry_msgs::Pose> poses;
-  for (int index = 0; index < ids.size(); index++) {
-    int marker_id = ids[index];
-
-    cv::Point centre = getMarkerCenter(marker_corners[index]);
-    cv::Point c1 = marker_corners[index][0];
-    cv::Point c2 = marker_corners[index][1];
-    cv::Point c3 = marker_corners[index][2];
-    cv::Point c4 = marker_corners[index][3];
-
-    //find depth point for each corner + centre
-    geometry_msgs::Pose p_centre  = findDepthPoint(depth_image, camera_info, centre.x, centre.y, is_depth_in_meters);
-    geometry_msgs::Pose top_left  = findDepthPoint(depth_image, camera_info, c1.x, c1.y, is_depth_in_meters);
-    geometry_msgs::Pose top_right = findDepthPoint(depth_image, camera_info, c2.x, c2.y, is_depth_in_meters);
-    geometry_msgs::Pose bot_right = findDepthPoint(depth_image, camera_info, c3.x, c3.y, is_depth_in_meters);
-    geometry_msgs::Pose bot_left  = findDepthPoint(depth_image, camera_info, c4.x, c4.y, is_depth_in_meters);
-
-    if (!isValid(top_left) || !isValid(top_right) || !isValid(bot_right) || !isValid(bot_left))
-      continue;
-
-    //vectors that represent the direction of the edges of the square
+geometry_msgs::Pose calculatePose(geometry_msgs::Pose p_centre, geometry_msgs::Pose top_left, geometry_msgs::Pose top_right, geometry_msgs::Pose bot_right, geometry_msgs::Pose  bot_left){
+  //vectors that represent the direction of the edges of the square
     geometry_msgs::Pose top     = diff(top_right, top_left);
     geometry_msgs::Pose right   = diff(top_right, bot_right);
     geometry_msgs::Pose left    = diff(top_left, bot_left);
@@ -334,12 +293,45 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat d
     pose.orientation.x = pose.orientation.x / l;
     pose.orientation.y = pose.orientation.y / l;
     pose.orientation.z = pose.orientation.z / l;
+    return pose;
+}
+
+std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat depth_image, sensor_msgs::CameraInfo camera_info,  bool display, bool is_depth_in_meters) {
+  vector<int> ids;
+  vector<vector<cv::Point2f> > marker_corners;
+  detect(image, ids, marker_corners);
+
+  if(display) {
+    displayResult(image, ids, marker_corners, "Output");
+  }
+
+  std::map<int, geometry_msgs::Pose> poses;
+  for (int index = 0; index < ids.size(); index++) {
+    int marker_id = ids[index];
+
+    cv::Point centre = getMarkerCenter(marker_corners[index]);
+    cv::Point c1 = marker_corners[index][0];
+    cv::Point c2 = marker_corners[index][1];
+    cv::Point c3 = marker_corners[index][2];
+    cv::Point c4 = marker_corners[index][3];
+
+    //find depth point for each corner + centre
+    geometry_msgs::Pose p_centre  = findDepthPoint(depth_image, camera_info, centre.x, centre.y, is_depth_in_meters);
+    geometry_msgs::Pose top_left  = findDepthPoint(depth_image, camera_info, c1.x, c1.y, is_depth_in_meters);
+    geometry_msgs::Pose top_right = findDepthPoint(depth_image, camera_info, c2.x, c2.y, is_depth_in_meters);
+    geometry_msgs::Pose bot_right = findDepthPoint(depth_image, camera_info, c3.x, c3.y, is_depth_in_meters);
+    geometry_msgs::Pose bot_left  = findDepthPoint(depth_image, camera_info, c4.x, c4.y, is_depth_in_meters);
+
+    if (!isValid(top_left) || !isValid(top_right) || !isValid(bot_right) || !isValid(bot_left))
+      continue;
+
+    geometry_msgs::Pose pose = calculatePose(p_centre, top_left, top_right, bot_right, bot_left);
     poses[marker_id] = pose;
   }
   return poses;
 }
 
-geometry_msgs::Pose calculatePose(Point left_point, Point right_point, Mat Q){
+geometry_msgs::Pose calculateStereoPose(Point left_point, Point right_point, Mat Q){
   //Note this is ripped directly from kiwibot_vision. Hard values are unknown as documentation is lacking
   //cout<< "left: x: " << lp.x <<" y: "<<lp.y<<endl;
   //cout<< "right: x: " << rp.x <<" y: "<<rp.y<<endl;
@@ -439,15 +431,19 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
   vector<vector<cv::Point2f> > right_corners;
   detect(right_image, right_ids, right_corners);
 
+  if(display) {
+    displayResult(left_image, left_ids, left_corners, "Left Output");
+    displayResult(right_image, right_ids, right_corners, "Right Output");
+  }
+
   Mat Q = getQMatrix(stereo_info);
 
   std::map<int, geometry_msgs::Pose> poses;
   for(int l_i = 0; l_i < left_ids.size(); ++l_i){
     int marker_id = left_ids[l_i];
 
-    int r_i = getIndex(l_i, right_ids);
+    int r_i = getIndex(marker_id, right_ids);
     if(r_i >= 0){
-
       vector<cv::Point2f> l_corners = left_corners[l_i];
       Point2f left_centre  = getMarkerCenter(l_corners);
 
@@ -455,120 +451,29 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
       Point2f right_centre = getMarkerCenter(r_corners);
 
       /*
-       * MAJOR STEP MISSING!
-       *
-       * MUST UNDISTORT THE POINTS BEFORE USING Q!!!
-       *
-       * Need StereoCameraInfo or undistorted image
+       * TODO: Add option to undistort the points if using distorted images
+        //camera matrix, dist_coeffs, R1, P1
+        // Mat M1, D1, R1, P1;
+        // l_corners = undistortPoints(l_corners, M1, D1, R1, P1);
+        // left_centre = undistortPoints({left_centre}, M1, D1, R1, P1)[0];
+        //
+        // Mat M2, D2, R2, P2;
+        // r_corners = undistortPoints(r_corners, M2, D2, R2, P2);
+        // right_centre = undistortPoints({right_centre}, M2, D2, R2, P2)[0];
        */
 
-      //camera matrix, dist_coeffs, R1, P1
-      // Mat M1, D1, R1, P1;
-      // l_corners = undistortPoints(l_corners, M1, D1, R1, P1);
-      // left_centre = undistortPoints({left_centre}, M1, D1, R1, P1)[0];
-      //
-      // Mat M2, D2, R2, P2;
-      // r_corners = undistortPoints(r_corners, M2, D2, R2, P2);
-      // right_centre = undistortPoints({right_centre}, M2, D2, R2, P2)[0];
-
-
-      geometry_msgs::Pose p_centre  = calculatePose(left_centre, right_centre, Q);
-      geometry_msgs::Pose top_left  = calculatePose(l_corners[0], r_corners[0], Q);
-      geometry_msgs::Pose top_right = calculatePose(l_corners[1], r_corners[1], Q);
-      geometry_msgs::Pose bot_right = calculatePose(l_corners[2], r_corners[2], Q);
-      geometry_msgs::Pose bot_left  = calculatePose(l_corners[3], r_corners[3], Q);
+      geometry_msgs::Pose p_centre  = calculateStereoPose(left_centre, right_centre, Q);
+      geometry_msgs::Pose top_left  = calculateStereoPose(l_corners[0], r_corners[0], Q);
+      geometry_msgs::Pose top_right = calculateStereoPose(l_corners[1], r_corners[1], Q);
+      geometry_msgs::Pose bot_right = calculateStereoPose(l_corners[2], r_corners[2], Q);
+      geometry_msgs::Pose bot_left  = calculateStereoPose(l_corners[3], r_corners[3], Q);
 
       if (!isValid(top_left) || !isValid(top_right) || !isValid(bot_right) || !isValid(bot_left))
         continue;
 
-      top_left  = diff(top_left, p_centre);
-      top_right = diff(top_right, p_centre);
-      bot_right = diff(bot_right, p_centre);
-      bot_left  = diff(bot_left, p_centre);
-
-      geometry_msgs::Pose v1 = top_left;
-      geometry_msgs::Pose v2 = bot_left;
-
-      geometry_msgs::Pose X = ave(v2, v1);
-      double length_x = sqrt(X.position.x * X.position.x + X.position.y * X.position.y + X.position.z * X.position.z);
-      X.position.x /= length_x;
-      X.position.y /= length_x;
-      X.position.z /= length_x;
-
-      geometry_msgs::Pose v3 = top_left;
-      geometry_msgs::Pose v4 = top_right;
-
-      geometry_msgs::Pose Y = ave(v4, v3);
-      double length_y = sqrt(Y.position.x * Y.position.x + Y.position.y * Y.position.y + Y.position.z * Y.position.z);
-      Y.position.x /= length_y;
-      Y.position.y /= length_y;
-      Y.position.z /= length_y;
-
-      geometry_msgs::Pose Z = crossProduct(X, Y);
-
-      double roll  = atan2(-Z.position.y, Z.position.z);
-      double pitch = asin(Z.position.x);
-      double yaw   = atan2(-Y.position.x, X.position.x);
-
-      geometry_msgs::Pose pose;
-
-      pose.position.x = p_centre.position.x;
-      pose.position.y = p_centre.position.y;
-      pose.position.z = p_centre.position.z;
-
-      //math to convert the rotation matrix to a quaternion
-      //rotation matrix is
-      //     [X.x Y.x Z.x ]
-      // R = [X.y Y.y Z.y ]
-      //     [X.z Y.z Z.z ]
-      // Math stolen from https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
-//[row][col]
-
-      //X Y Z should be rewritten into a 3x3 array
-      double trace = X.position.x + Y.position.y + Z.position.z;
-      if( trace > 0 )
-      {
-        double s = 0.5f / sqrtf(trace+ 1.0f);
-        pose.orientation.w = 0.25f / s;
-        pose.orientation.x = (Y.position.z - Z.position.y ) * s;
-        pose.orientation.y = (Z.position.x - X.position.z ) * s;
-        pose.orientation.z = (X.position.y - Y.position.x ) * s;
-      }
-      else
-      {
-        if ( X.position.x > Y.position.y && X.position.x > Z.position.z )
-        {
-          double s = 2.0f * sqrtf( 1.0f + X.position.x - Y.position.y - Z.position.z);
-          pose.orientation.w = (Y.position.z - Z.position.y ) / s;
-          pose.orientation.x = 0.25f * s;
-          pose.orientation.y = (Y.position.x + X.position.y ) / s;
-          pose.orientation.z = (Z.position.x + X.position.z ) / s;
-        }
-        else if (Y.position.y > Z.position.z)
-        {
-          double s = 2.0f * sqrtf( 1.0f + Y.position.y - X.position.x - Z.position.z);
-          pose.orientation.w = (Z.position.x - X.position.z ) / s;
-          pose.orientation.x = (Y.position.x + X.position.y ) / s;
-          pose.orientation.y = 0.25f * s;
-          pose.orientation.z = (Y.position.z + Z.position.y ) / s;
-        }
-        else
-        {
-          double s = 2.0f * sqrtf( 1.0f + Z.position.z - X.position.x - Y.position.y );
-          pose.orientation.w = (X.position.y - Y.position.x ) / s;
-          pose.orientation.x = (X.position.z + Z.position.x ) / s;
-          pose.orientation.y = (Y.position.z + Z.position.y ) / s;
-          pose.orientation.z = 0.25f * s;
-        }
-      }
+      geometry_msgs::Pose pose = calculatePose(p_centre, top_left, top_right, bot_right, bot_left);
       poses[marker_id] = pose;
     }
   }
-
-  if(display) {
-    displayResult(left_image, left_ids, left_corners, "Left");
-    displayResult(right_image, right_ids, right_corners, "Right");
-  }
-
   return poses;
 }

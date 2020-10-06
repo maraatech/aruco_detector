@@ -208,7 +208,7 @@ Display detection results on screen
 
 ### Stereo Detector
 
-ROS node that will detect aruco markers in stereo RGB data and publish the pose transform relative to the left frame.
+ROS node that will detect aruco markers in stereo RGB data (undistorted currently) and publish the pose transform relative to the left frame.
 
 ##### Subscribed Topics
 Topic names are all default names, they can be changed via setting parameters in the launch file.
