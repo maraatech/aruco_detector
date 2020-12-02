@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="ns"            default="camera"/>
-  <arg name="image_left"    default="left/image_color_rect"/>
-  <arg name="image_right"   default="right/image_color_rect"/>
+  <arg name="image_left"    default="/camera_array/stereo1/left/image_color_rect"/>
+  <arg name="image_right"   default="/camera_array/stereo1/right/image_color_rect"/>
   <arg name="markers"       default="markers"/>
   <arg name="stereo_info"   default="/camera_array/stereo1/stereo_info"/>
   <arg name="display"       default="true"/>
 
   <group ns="$(arg ns)">
-      <node name="stereo_detector_node" pkg="aruco_detector" type="stereo_detector_node" output="screen">
+      <node name="stereo_detector_node" pkg="aruco_detector" type="stereo_detector_node" output="screen" respawn="true">
         <param name="image_left"    value="$(arg image_left)" />
         <param name="image_right"   value="$(arg image_right)" />
         <param name="markers"       value="$(arg markers)"/>

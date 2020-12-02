@@ -50,7 +50,7 @@ Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
   {
     //Get the time_start image in opencv Mat format
     Mat bgr_image = cv_bridge::toCvShare(msg, msg->encoding)->image;
-
+    std::cout<<msg->encoding<<std::endl;
     //Convert RGB image to bgr if required
     if(msg->encoding == "rgb8"){//TODO put static type in here instead
       cvtColor(bgr_image, bgr_image, CV_RGB2BGR);

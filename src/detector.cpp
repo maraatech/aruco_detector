@@ -9,7 +9,7 @@
 MarkerDetector::MarkerDetector()
 {
 //  this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_6X6_250);
-  // this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_4X4_50);
+ // this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_4X4_50);
   this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_4X4_250);
   this->detector_params_ = aruco::DetectorParameters::create();
 }
@@ -81,7 +81,7 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, senso
     image.copyTo(image_copy);
     cv::aruco::drawDetectedMarkers(image_copy, marker_corners, ids);
     for (int i = 0; i < ids.size(); i++) {
-      cv::aruco::drawAxis(image_copy, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.05);
+      cv::aruco::drawAxis(image_copy, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.15);
     }
     cv::imshow("Output", image_copy);
     cv::waitKey(10);
@@ -90,6 +90,7 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, senso
   std::map<int, geometry_msgs::Pose> poses;
 
   for (int i = 0; i < ids.size(); i++) {
+    //std::cout<<"found id"<<std::endl;
     int id = ids[i];
     Vec<double, 3> rotation    = rvecs[i];
     Vec<double, 3> translation = tvecs[i];
@@ -336,17 +337,18 @@ geometry_msgs::Pose calculateStereoPose(Point left_point, Point right_point, Mat
   //cout<< "left: x: " << lp.x <<" y: "<<lp.y<<endl;
   //cout<< "right: x: " << rp.x <<" y: "<<rp.y<<endl;
   cv::Mat coordmat = cv::Mat::zeros(4, 1, CV_64FC1);
+  double disparity = (double) abs((left_point.x) - (right_point.x ));
   coordmat.at<double>(0, 0) = left_point.x;//*4
   coordmat.at<double>(0, 1) = left_point.y;// * 4
-  coordmat.at<double>(0, 2) = (double) abs((left_point.x) - (right_point.x ));
+  coordmat.at<double>(0, 2) = disparity;
   coordmat.at<double>(0, 3) = 1;
-  //cout<<coordmat.at<double>(0, 0) << coordmat.at<double>(0, 1)<<
-  //  coordmat.at<double>(0, 2)<< coordmat.at<double>(0, 3)<<endl;
   cv::Mat result = Q * coordmat;
+
 
   double x = (double) result.at<double>(0, 0) / result.at<double>(0, 3);
   double y = (double) result.at<double>(0, 1) / result.at<double>(0, 3);
   double z = (double) result.at<double>(0, 2) / result.at<double>(0, 3);
+
 
   geometry_msgs::Pose pose;
   pose.position.x = x;
@@ -444,6 +446,7 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
 
     int r_i = getIndex(marker_id, right_ids);
     if(r_i >= 0){
+      std::cout<<"found"<<r_i<<std::endl;
       vector<cv::Point2f> l_corners = left_corners[l_i];
       Point2f left_centre  = getMarkerCenter(l_corners);
 
@@ -468,8 +471,10 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
       geometry_msgs::Pose bot_right = calculateStereoPose(l_corners[2], r_corners[2], Q);
       geometry_msgs::Pose bot_left  = calculateStereoPose(l_corners[3], r_corners[3], Q);
 
-      if (!isValid(top_left) || !isValid(top_right) || !isValid(bot_right) || !isValid(bot_left))
+      if (!isValid(top_left) || !isValid(top_right) || !isValid(bot_right) || !isValid(bot_left)){
+        std::cout<<"invalid shouldnt be here"<<isValid(top_left) << isValid(top_right) << isValid(bot_right) << isValid(bot_left)<<std::endl;
         continue;
+      }
 
       geometry_msgs::Pose pose = calculatePose(p_centre, top_left, top_right, bot_right, bot_left);
       poses[marker_id] = pose;

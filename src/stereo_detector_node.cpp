@@ -71,11 +71,12 @@ void callback(const sensor_msgs::ImageConstPtr &image_left_msg,
   cv::Mat image_left = convertToMat(image_left_msg);
   cv::Mat image_right = convertToMat(image_right_msg);
 
-  std::map<int, geometry_msgs::Pose> markers = detector.processImages(image_left, image_right, *stereo_camera_info, false);
+  std::map<int, geometry_msgs::Pose> markers = detector.processImages(image_left, image_right, *stereo_camera_info, true);
 
  geometry_msgs::PoseArray poses;
  poses.header.stamp = image_left_msg->header.stamp;
  poses.header.frame_id = image_left_msg->header.frame_id;
+
  for(auto marker_info : markers){
    int id = marker_info.first;
    geometry_msgs::Pose marker = marker_info.second;
@@ -84,7 +85,7 @@ void callback(const sensor_msgs::ImageConstPtr &image_left_msg,
    static tf2_ros::TransformBroadcaster br;
    geometry_msgs::TransformStamped pose_tf;
    pose_tf.header.stamp    = image_left_msg->header.stamp;
-   pose_tf.header.frame_id = image_left_msg->header.frame_id;
+   pose_tf.header.frame_id = "stereo1/left";//image_left_msg->header.frame_id;
    pose_tf.child_frame_id  = tf_ns+std::to_string(id);
 
    pose_tf.transform.translation.x = marker.position.x;
