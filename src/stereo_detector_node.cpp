@@ -24,7 +24,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/PoseArray.h>
-#include <maara_msgs/StereoCameraInfo.h>
+#include <cares_msgs/StereoCameraInfo.h>
 
 #include "../include/aruco_detector/parameters.h"
 #include "../include/aruco_detector/detector.h"
@@ -67,7 +67,7 @@ Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
 
 void callback(const sensor_msgs::ImageConstPtr &image_left_msg,
               const sensor_msgs::ImageConstPtr &image_right_msg,
-              const maara_msgs::StereoCameraInfoConstPtr &stereo_camera_info){
+              const cares_msgs::StereoCameraInfoConstPtr &stereo_camera_info){
   cv::Mat image_left = convertToMat(image_left_msg);
   cv::Mat image_right = convertToMat(image_right_msg);
 
@@ -140,9 +140,9 @@ int main(int argc, char *argv[]) {
 
   Subscriber<sensor_msgs::Image> image_left_sub(nh, image_left, 1);
   Subscriber<sensor_msgs::Image> image_right_sub(nh, image_right, 1);
-  Subscriber<maara_msgs::StereoCameraInfo> camera_info_sub(nh, stereo_info, 1);
+  Subscriber<cares_msgs::StereoCameraInfo> camera_info_sub(nh, stereo_info, 1);
 
-  typedef sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, maara_msgs::StereoCameraInfo> SyncPolicy;
+  typedef sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, cares_msgs::StereoCameraInfo> SyncPolicy;
   Synchronizer<SyncPolicy> synchronizer(SyncPolicy(10), image_left_sub, image_right_sub, camera_info_sub);
   synchronizer.registerCallback(callback);
 

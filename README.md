@@ -15,9 +15,9 @@ Presumes you are using ~/catkin_ws as ROS workspace, if you are not make adjustm
 ```
 1) ROS Melodic (no known reason why future versions will not work at this stage, Kenitic works fine too)
 
-2) Pull master version of maara_msgs
+2) Pull master version of cares_msgs
    a) cd ~/catkin_ws/src
-   b) git clone https://github.com/maraatech/maara_msgs.git
+   b) git clone https://github.com/UoA-CARES/cares_msgs.git
    
 3) Compile all libraries
    a) cd ~/catkin_ws

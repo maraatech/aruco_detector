@@ -20,7 +20,7 @@ void MarkerDetector::detect(Mat image, vector<int> &marker_ids, vector<vector<cv
   aruco::detectMarkers(image, this->dictionary_, marker_corners, marker_ids, this->detector_params_, rejected_markers_);
 }
 
-cv::Mat getQMatrix(const maara_msgs::StereoCameraInfo stereo_info) {
+cv::Mat getQMatrix(const cares_msgs::StereoCameraInfo stereo_info) {
   cv::Mat Q(4, 4, CV_64FC1, (void *) stereo_info.Q.data());
   return Q;
 }
@@ -422,7 +422,7 @@ int getIndex(int id, std::vector<int> &point_ids){
 //   return result;
 // }
 
-std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image, Mat right_image, maara_msgs::StereoCameraInfo stereo_info, bool display) {
+std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image, Mat right_image, cares_msgs::StereoCameraInfo stereo_info, bool display) {
   vector<int> left_ids;
   vector<vector<cv::Point2f> > left_corners;
   detect(left_image, left_ids, left_corners);
