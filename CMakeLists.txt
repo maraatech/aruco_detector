@@ -21,7 +21,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   geometry_msgs
   sensor_msgs
-  maara_msgs
   cares_msgs
 )
 
