@@ -70,7 +70,6 @@ Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
 void callback(const sensor_msgs::ImageConstPtr &image_left_msg,
               const sensor_msgs::ImageConstPtr &image_right_msg,
               const cares_msgs::StereoCameraInfoConstPtr &stereo_camera_info){
-  std::cout<<"fhjasklhfdjskalhfdlksa"<<std::endl;
   cv::Mat image_left = convertToMat(image_left_msg);
   cv::Mat image_right = convertToMat(image_right_msg);
 
