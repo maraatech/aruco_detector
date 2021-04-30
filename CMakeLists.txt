@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   sensor_msgs
   maara_msgs
+  message_generation
 )
 
 find_package(OpenCV REQUIRED)
@@ -70,9 +71,8 @@ find_package(Boost REQUIRED)
 ## Generate services in the 'srv' folder
 # add_service_files(
 #   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+#   CharucoDetect.srv
+#)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -82,10 +82,13 @@ find_package(Boost REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
+#generate_messages(
 #   DEPENDENCIES
 #   std_msgs
-# )
+#   geometry_msgs
+#   sensor_msgs
+#   maara_msgs
+#)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -165,6 +168,16 @@ target_link_libraries(stereo_detector_node
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
 add_dependencies(stereo_detector_node ${catkin_EXPORTED_TARGETS})
+
+add_executable(charuco_detector_service
+        src/charuco_detector_service.cpp
+        src/detector.cpp
+        include/aruco_detector/detector.h
+        include/aruco_detector/parameters.h)
+target_link_libraries(charuco_detector_service
+        ${OpenCV_LIBRARIES}
+        ${catkin_LIBRARIES})
+add_dependencies(charuco_detector_service ${catkin_EXPORTED_TARGETS})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries

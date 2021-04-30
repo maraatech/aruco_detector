@@ -13,7 +13,7 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <sensor_msgs/CameraInfo.h>
-#include <maara_msgs/StereoCameraInfo.h>
+#include <cares_msgs/StereoCameraInfo.h>
 
 using namespace cv;
 using namespace std;
@@ -21,9 +21,10 @@ using namespace std;
 class MarkerDetector {
 public:
     MarkerDetector();
-
+    //Stereo Charuco Detection
+    std::map<int, geometry_msgs::Pose> processCharucoImages(Mat left_image, Mat right_image, cares_msgs::StereoCameraInfo stereo_info, bool display);
     //Stereo Detection
-    std::map<int, geometry_msgs::Pose> processImages(Mat left_image, Mat right_image, maara_msgs::StereoCameraInfo stereo_info, bool display);
+    std::map<int, geometry_msgs::Pose> processImages(Mat left_image, Mat right_image, cares_msgs::StereoCameraInfo stereo_info, bool display);
     //Single Image
     std::map<int, geometry_msgs::Pose> processImage(Mat image, sensor_msgs::CameraInfo camera_info, double marker_size, bool display);
     //Depth Detection
@@ -33,6 +34,7 @@ private:
 
     Ptr<aruco::DetectorParameters> detector_params_;
     Ptr<aruco::Dictionary> dictionary_;
+    Ptr<aruco::Dictionary> charuco_dictionary_;
 
     void detect(Mat image, vector<int> &point_ids, vector<vector<cv::Point2f> > &marker_corners);
 };

@@ -9,8 +9,9 @@
 MarkerDetector::MarkerDetector()
 {
 //  this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_6X6_250);
- // this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_4X4_50);
-  this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_4X4_250);
+  this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_4X4_50);
+  //this->dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_6X6_250);
+  this->charuco_dictionary_ = aruco::getPredefinedDictionary(aruco::DICT_4X4_50);
   this->detector_params_ = aruco::DetectorParameters::create();
 }
 
@@ -20,7 +21,7 @@ void MarkerDetector::detect(Mat image, vector<int> &marker_ids, vector<vector<cv
   aruco::detectMarkers(image, this->dictionary_, marker_corners, marker_ids, this->detector_params_, rejected_markers_);
 }
 
-cv::Mat getQMatrix(const maara_msgs::StereoCameraInfo stereo_info) {
+cv::Mat getQMatrix(const cares_msgs::StereoCameraInfo stereo_info) {
   cv::Mat Q(4, 4, CV_64FC1, (void *) stereo_info.Q.data());
   return Q;
 }
@@ -334,8 +335,6 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image, Mat d
 
 geometry_msgs::Pose calculateStereoPose(Point left_point, Point right_point, Mat Q){
   //Note this is ripped directly from kiwibot_vision. Hard values are unknown as documentation is lacking
-  //cout<< "left: x: " << lp.x <<" y: "<<lp.y<<endl;
-  //cout<< "right: x: " << rp.x <<" y: "<<rp.y<<endl;
   cv::Mat coordmat = cv::Mat::zeros(4, 1, CV_64FC1);
   double disparity = (double) abs((left_point.x) - (right_point.x ));
   coordmat.at<double>(0, 0) = left_point.x;//*4
@@ -354,6 +353,7 @@ geometry_msgs::Pose calculateStereoPose(Point left_point, Point right_point, Mat
   pose.position.x = x;
   pose.position.y = y;
   pose.position.z = z;
+  //std::cout<<"pose is "<<pose<<std::endl;
   return pose;
 }
 
@@ -424,7 +424,7 @@ int getIndex(int id, std::vector<int> &point_ids){
 //   return result;
 // }
 
-std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image, Mat right_image, maara_msgs::StereoCameraInfo stereo_info, bool display) {
+std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image, Mat right_image, cares_msgs::StereoCameraInfo stereo_info, bool display) {
   vector<int> left_ids;
   vector<vector<cv::Point2f> > left_corners;
   detect(left_image, left_ids, left_corners);
@@ -477,8 +477,90 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
       }
 
       geometry_msgs::Pose pose = calculatePose(p_centre, top_left, top_right, bot_right, bot_left);
+      std::cout<<"pose is "<<pose<<std::endl;
       poses[marker_id] = pose;
     }
   }
   return poses;
+}
+
+
+std::map<int, geometry_msgs::Pose> MarkerDetector::processCharucoImages(Mat left_image, Mat right_image, cares_msgs::StereoCameraInfo stereo_info, bool display)
+{
+    std::map<int, geometry_msgs::Pose> poses;
+    cv::Mat left_copy, right_copy,board_img;
+    cv::Ptr<cv::aruco::CharucoBoard> board = cv::aruco::CharucoBoard::create(9, 6, 0.04f, 0.02f, this->charuco_dictionary_);
+    //board->draw(cv::Size(600,800),board_img,0,1);
+    std::cout<<"djlaksjfkldsjflks2"<<std::endl;
+    cv::Ptr<cv::aruco::DetectorParameters> params = cv::aruco::DetectorParameters::create();
+    std::vector<int> markerIds_left, markerIds_right;
+    left_image.copyTo(left_copy);
+    right_image.copyTo(right_copy);
+    std::vector<std::vector<cv::Point2f> > markerCorners_left, markerCorners_right;
+    cv::aruco::detectMarkers(left_image, board->dictionary, markerCorners_left, markerIds_left, params);
+    cv::aruco::detectMarkers(right_image, board->dictionary, markerCorners_right, markerIds_right, params);
+    cv::Mat cameraMatrix_left = getCameraMatrix(stereo_info.left_info);
+    cv::Mat distCoeff_left = getDistCoef(stereo_info.left_info);
+    cv::Mat cameraMatrix_right = getCameraMatrix(stereo_info.right_info);
+    cv::Mat distCoeff_right = getDistCoef(stereo_info.right_info);
+    cv::Mat Q = getQMatrix(stereo_info);
+    cv::Scalar color = cv::Scalar(255, 0, 0);
+    // if at least one marker detected
+    std::cout<<markerIds_left.size()<<markerIds_right.size()<<std::endl;
+    if (markerIds_left.size() > 0 && markerIds_right.size()>0) {
+        cv::aruco::drawDetectedMarkers(left_copy, markerCorners_left, markerIds_left);
+        cv::aruco::drawDetectedMarkers(right_copy, markerCorners_right, markerIds_right);
+        auto left_im_index_center = getIndex(11,markerIds_left);
+        auto right_im_index_center = getIndex(11,markerIds_right);
+        auto left_im_index_tl = getIndex(6,markerIds_left);
+        auto left_im_index_tr = getIndex(7,markerIds_left);
+        auto right_im_index_tl = getIndex(6, markerIds_right);
+        auto right_im_index_tr = getIndex(7, markerIds_right);
+        auto left_im_index_bl = getIndex(15,markerIds_left);
+        auto left_im_index_br = getIndex(16,markerIds_left);
+        auto right_im_index_bl = getIndex(15, markerIds_right);
+        auto right_im_index_br = getIndex(16, markerIds_right);
+        if(left_im_index_tl > -1 && left_im_index_tr >-1 && left_im_index_bl>-1 && left_im_index_br >-1 && left_im_index_center >-1 &&
+          right_im_index_tl > -1 && right_im_index_tr > -1 && right_im_index_bl>-1 && right_im_index_br >-1 && right_im_index_center >-1){
+          //left image
+          auto left_point_center = getMarkerCenter(markerCorners_left[left_im_index_center]);
+          auto left_point_tl = getMarkerCenter(markerCorners_left[left_im_index_tl]);
+          auto left_point_tr = getMarkerCenter(markerCorners_left[left_im_index_tr]);
+          auto left_point_bl = getMarkerCenter(markerCorners_left[left_im_index_bl]);
+          auto left_point_br = getMarkerCenter(markerCorners_left[left_im_index_br]);
+          //right image
+          auto right_point_center = getMarkerCenter(markerCorners_right[right_im_index_center]);
+          auto right_point_tl = getMarkerCenter(markerCorners_right[right_im_index_tl]);
+          auto right_point_tr = getMarkerCenter(markerCorners_right[right_im_index_tr]);
+          auto right_point_bl = getMarkerCenter(markerCorners_right[right_im_index_bl]);
+          auto right_point_br = getMarkerCenter(markerCorners_right[right_im_index_br]);
+
+          geometry_msgs::Pose p_centre  = calculateStereoPose(left_point_center, right_point_center, Q);
+          geometry_msgs::Pose top_left  = calculateStereoPose(left_point_tl, right_point_tl, Q);
+          geometry_msgs::Pose top_right = calculateStereoPose(left_point_tr, right_point_tr, Q);
+          geometry_msgs::Pose bot_right = calculateStereoPose(left_point_br, right_point_br, Q);
+          geometry_msgs::Pose bot_left  = calculateStereoPose(left_point_bl, right_point_bl, Q);
+
+          
+          //std::cout<<top_left << top_right << bot_right << bot_left<<p_centre<<std::endl;
+          geometry_msgs::Pose pose = calculatePose(p_centre, top_left, top_right, bot_right, bot_left);
+          //if (!isValid(pose)){
+          //  std::cout<<"invalid shouldnt be here"<<pose<<std::endl;
+          //  return poses;
+          //}
+          pose.position.x = pose.position.x;
+          pose.position.y = pose.position.y;
+          pose.position.z = pose.position.z;
+          poses[0] = pose;
+          cv::circle(left_copy, left_point_center,30, color, 3, 8, 0);
+          cv::circle(right_copy, right_point_center,30, color, 3, 8, 0);
+        }
+        cv::Mat dst_l, dst_r;
+        cv::resize(left_copy, dst_l, cv::Size(640, 480), 0, 0, INTER_CUBIC);
+        cv::resize(right_copy, dst_r, cv::Size(640, 480), 0, 0, INTER_CUBIC);
+        cv::imshow("charuco", dst_l);
+        cv::imshow("charuco2", dst_r);
+        cv::waitKey(10);
+    }
+    return poses;
 }

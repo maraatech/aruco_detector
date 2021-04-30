@@ -24,10 +24,12 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/PoseArray.h>
-#include <maara_msgs/StereoCameraInfo.h>
+#include <cares_msgs/StereoCameraInfo.h>
 
 #include "../include/aruco_detector/parameters.h"
 #include "../include/aruco_detector/detector.h"
+
+#include "cares_msgs/CharucoDetect.h"
 
 using namespace cv;
 using namespace std;
@@ -67,11 +69,13 @@ Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
 
 void callback(const sensor_msgs::ImageConstPtr &image_left_msg,
               const sensor_msgs::ImageConstPtr &image_right_msg,
-              const maara_msgs::StereoCameraInfoConstPtr &stereo_camera_info){
+              const cares_msgs::StereoCameraInfoConstPtr &stereo_camera_info){
+  std::cout<<"fhjasklhfdjskalhfdlksa"<<std::endl;
   cv::Mat image_left = convertToMat(image_left_msg);
   cv::Mat image_right = convertToMat(image_right_msg);
 
-  std::map<int, geometry_msgs::Pose> markers = detector.processImages(image_left, image_right, *stereo_camera_info, true);
+  //std::map<int, geometry_msgs::Pose> markers = detector.processImages(image_left, image_right, *stereo_camera_info, true);
+std::map<int, geometry_msgs::Pose> markers = detector.processCharucoImages(image_left, image_right, *stereo_camera_info, true);
 
  geometry_msgs::PoseArray poses;
  poses.header.stamp = image_left_msg->header.stamp;
@@ -84,9 +88,9 @@ void callback(const sensor_msgs::ImageConstPtr &image_left_msg,
 
    static tf2_ros::TransformBroadcaster br;
    geometry_msgs::TransformStamped pose_tf;
-   pose_tf.header.stamp    = image_left_msg->header.stamp;
-   pose_tf.header.frame_id = "stereo1/left";//image_left_msg->header.frame_id;
-   pose_tf.child_frame_id  = tf_ns+std::to_string(id);
+   pose_tf.header.stamp    = ros::Time::now();
+   pose_tf.header.frame_id = image_left_msg->header.frame_id;
+   pose_tf.child_frame_id  = tf_ns+std::to_string(0);
 
    pose_tf.transform.translation.x = marker.position.x;
    pose_tf.transform.translation.y = marker.position.y;
@@ -141,14 +145,13 @@ int main(int argc, char *argv[]) {
 
   Subscriber<sensor_msgs::Image> image_left_sub(nh, image_left, 1);
   Subscriber<sensor_msgs::Image> image_right_sub(nh, image_right, 1);
-  Subscriber<maara_msgs::StereoCameraInfo> camera_info_sub(nh, stereo_info, 1);
+  Subscriber<cares_msgs::StereoCameraInfo> camera_info_sub(nh, stereo_info, 1);
 
-  typedef sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, maara_msgs::StereoCameraInfo> SyncPolicy;
+  typedef sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, cares_msgs::StereoCameraInfo> SyncPolicy;
   Synchronizer<SyncPolicy> synchronizer(SyncPolicy(10), image_left_sub, image_right_sub, camera_info_sub);
   synchronizer.registerCallback(callback);
 
   pub_marker_pose = nh.advertise<geometry_msgs::PoseArray>(marker, 10);
-
   ROS_INFO("Ready to find aruco markers");
 
   ros::spin();

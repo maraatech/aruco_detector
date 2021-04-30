@@ -135,9 +135,12 @@ int main(int argc, char *argv[]) {
   tf_ns = tf_prefix + tf_ns;
   ROS_INFO(tf_ns.c_str());
   
-  nh_private.param(cares::marker::IS_DEPTH_IN_METERS, is_depth_in_meters, false);
+  nh_private.getParam(cares::marker::IS_DEPTH_IN_METERS, is_depth_in_meters);
+    is_depth_in_meters = true;
+  std::cout<<"should be true "<<is_depth_in_meters<<std::endl;
   std::string t = "Depth data expected in ";
   t += is_depth_in_meters ? "m" : "mm";
+
   ROS_INFO(t.c_str());
 
   nh_private.param(cares::marker::DISPLAY_B, display, true);

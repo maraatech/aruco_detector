@@ -6,7 +6,7 @@
   <arg name="depth_image"   default="aligned_depth_to_color/image_raw"/>
   <arg name="camera_info"   default="color/camera_info"/>
   <arg name="display"       default="true"/>
-  <arg name="is_depth_in_meters" default="false" />
+  <arg name="is_depth_in_meters" default="true" />
 
   <group ns="$(arg ns)">
       <node name="depth_detector_node" pkg="aruco_detector" type="depth_detector_node" output="screen">
