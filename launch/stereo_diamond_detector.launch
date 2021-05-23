@@ -7,6 +7,12 @@
   <arg name="stereo_info"   default="stereo_info"/>
   <arg name="display"       default="true"/>
 
+  <arg name="centre"    default="11"/>
+  <arg name="top_left"  default="6"/>
+  <arg name="top_right" default="7"/>
+  <arg name="bot_right" default="16"/>
+  <arg name="bot_left"  default="15"/>
+
   <group ns="$(arg ns)">
       <node name="stereo_detector_node" pkg="aruco_detector" type="stereo_detector_node" output="screen" respawn="true">
         <param name="image_left"    value="$(arg image_left)" />
@@ -15,6 +21,12 @@
         <param name="stereo_info"   value="$(arg stereo_info)" />
         <param name="tf_prefix"     value="$(arg ns)" />
         <param name="display"       value="$(arg display)"/>
+
+        <param name="centre"    value="$(arg centre)"/>
+        <param name="top_left"  value="$(arg top_left)"/>
+        <param name="top_right" value="$(arg top_right)"/>
+        <param name="bot_right" value="$(arg bot_right)"/>
+        <param name="bot_left"  value="$(arg bot_left)"/>
       </node>
    </group>
 </launch>

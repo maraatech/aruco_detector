@@ -24,8 +24,8 @@
 #include <tf2/transform_datatypes.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include "../include/aruco_detector/parameters.h"
-//#include "../include/aruco_detector/depth_detector.h"
 #include "../include/aruco_detector/detector.h"
 
 using namespace cv;
@@ -35,16 +35,12 @@ using namespace sensor_msgs;
 using namespace message_filters;
 
 //DepthMarkerDetector detector;
-MarkerDetector detector;
+MarkerDetector detector(0);
 std::string tf_ns = "_aruco_";
 ros::Publisher pub_marker_pose;
 bool display = true;
 bool is_depth_in_meters = false;
-/**
- * Convert ROS image format to OpenCV image format
- * @param msg ROS image
- * @return OpenCV Mat
- */
+
 Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
   try
   {
@@ -74,6 +70,7 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
   geometry_msgs::PoseArray poses;
   poses.header.stamp = depth_image_msg->header.stamp;
   poses.header.frame_id = depth_image_msg->header.frame_id;
+
   for(auto marker_info : markers){
     int id = marker_info.first;
     geometry_msgs::Pose marker = marker_info.second;
@@ -136,7 +133,6 @@ int main(int argc, char *argv[]) {
   ROS_INFO(tf_ns.c_str());
   
   nh_private.getParam(cares::marker::IS_DEPTH_IN_METERS, is_depth_in_meters);
-    is_depth_in_meters = true;
   std::cout<<"should be true "<<is_depth_in_meters<<std::endl;
   std::string t = "Depth data expected in ";
   t += is_depth_in_meters ? "m" : "mm";

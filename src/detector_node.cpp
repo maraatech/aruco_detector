@@ -34,17 +34,12 @@ using namespace cv_bridge;
 using namespace sensor_msgs;
 using namespace message_filters;
 
-MarkerDetector detector;
+MarkerDetector detector(0);
 std::string tf_ns = "_aruco_";
 ros::Publisher pub_marker_pose;
 bool display = true;
 double marker_size;
 
-/**
- * Convert ROS image format to OpenCV image format
- * @param msg ROS image
- * @return OpenCV Mat
- */
 Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
   try
   {
@@ -132,7 +127,7 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   tf_ns = tf_prefix + tf_ns;
-  ROS_INFO(tf_ns.c_str());
+  ROS_INFO("TF namespace: %s",tf_ns.c_str());
   nh_private.param(cares::marker::DISPLAY_B, display, true);
 
   Subscriber<sensor_msgs::Image> image_sub(nh, image, 1);

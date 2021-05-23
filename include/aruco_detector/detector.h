@@ -1,9 +1,9 @@
 //
-// Created by anyone on 12/02/20.
+// Created by anyone on 17/05/21.
 //
 
-#ifndef ARUCO_DETECTOR_DETECTOR_H
-#define ARUCO_DETECTOR_DETECTOR_H
+#ifndef SRC_DETECTOR_H
+#define SRC_DETECTOR_H
 
 #include "ros/ros.h"
 #include "opencv2/opencv.hpp"
@@ -19,25 +19,41 @@ using namespace cv;
 using namespace std;
 
 class MarkerDetector {
-public:
-    MarkerDetector();
-    //Stereo Charuco Detection
-    std::map<int, geometry_msgs::Pose> processCharucoImages(Mat left_image, Mat right_image, cares_msgs::StereoCameraInfo stereo_info, bool display);
-    //Stereo Detection
-    std::map<int, geometry_msgs::Pose> processImages(Mat left_image, Mat right_image, cares_msgs::StereoCameraInfo stereo_info, bool display);
-    //Single Image
-    std::map<int, geometry_msgs::Pose> processImage(Mat image, sensor_msgs::CameraInfo camera_info, double marker_size, bool display);
-    //Depth Detection
-    std::map<int, geometry_msgs::Pose> processImage(Mat image, Mat depth_image, sensor_msgs::CameraInfo camera_info, bool display, bool is_depth_in_meters=false);
-
 private:
+    Ptr<aruco::DetectorParameters> detector_params;
+    Ptr<aruco::Dictionary> dictionary;
 
-    Ptr<aruco::DetectorParameters> detector_params_;
-    Ptr<aruco::Dictionary> dictionary_;
-    Ptr<aruco::Dictionary> charuco_dictionary_;
+    void detect(Mat image, vector<int> &marker_ids, vector<vector<cv::Point2f> > &marker_corners);
+public:
+    MarkerDetector(int dictionary_id){
+      this->dictionary = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME(dictionary_id));
+      this->detector_params = aruco::DetectorParameters::create();
+    }
 
-    void detect(Mat image, vector<int> &point_ids, vector<vector<cv::Point2f> > &marker_corners);
+    //Stereo Detection
+    virtual std::map<int, geometry_msgs::Pose> processImages(Mat left_image,
+                                                     Mat right_image,
+                                                     cares_msgs::StereoCameraInfo stereo_info,
+                                                     bool display);
+    //Single Image
+    std::map<int, geometry_msgs::Pose> processImage(Mat image,
+                                                    sensor_msgs::CameraInfo camera_info,
+                                                    double marker_size,
+                                                    bool display);
+    //Depth Detection
+    std::map<int, geometry_msgs::Pose> processImage(Mat image,
+                                                    Mat depth_image,
+                                                    sensor_msgs::CameraInfo camera_info,
+                                                    bool display,
+                                                    bool is_depth_in_meters=false);
+
+    geometry_msgs::Pose calculatePose(geometry_msgs::Pose p_centre,
+                                      geometry_msgs::Pose top_left,
+                                      geometry_msgs::Pose top_right,
+                                      geometry_msgs::Pose bot_right,
+                                      geometry_msgs::Pose  bot_left);
 };
 
 
-#endif //ARUCO_DETECTOR_DETECTOR_H
+
+#endif //SRC_DETECTOR_H

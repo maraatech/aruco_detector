@@ -29,6 +29,7 @@
 #include "../include/aruco_detector/parameters.h"
 #include "../include/aruco_detector/detector.h"
 #include "../include/aruco_detector/diamond_detector.h"
+#include "cares_msgs/ArucoDetect.h"
 
 using namespace cv;
 using namespace std;
@@ -36,15 +37,12 @@ using namespace cv_bridge;
 using namespace sensor_msgs;
 using namespace message_filters;
 
-//StereoMarkerDetector detector;
 MarkerDetector* detector;
 std::string tf_ns = "_aruco_";
-ros::Publisher pub_marker_pose;
 bool display = true;
 
 Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
-  try
-  {
+  try{
     //Get the time_start image in opencv Mat format
     Mat bgr_image = cv_bridge::toCvShare(msg, msg->encoding)->image;
 
@@ -61,40 +59,39 @@ Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
   }
 }
 
-void callback(const sensor_msgs::ImageConstPtr &image_left_msg,
-              const sensor_msgs::ImageConstPtr &image_right_msg,
-              const cares_msgs::StereoCameraInfoConstPtr &stereo_camera_info){
-  cv::Mat image_left = convertToMat(image_left_msg);
-  cv::Mat image_right = convertToMat(image_right_msg);
-  std::map<int, geometry_msgs::Pose> markers = detector->processImages(image_left, image_right, *stereo_camera_info, display);
+bool callback(cares_msgs::ArucoDetect::Request &request, cares_msgs::ArucoDetect::Response &response){
+    auto left_ptr = boost::make_shared<sensor_msgs::Image>(request.left_image);
+    auto right_ptr = boost::make_shared<sensor_msgs::Image>(request.right_image);
+    cv::Mat image_left = convertToMat(left_ptr);
+    cv::Mat image_right = convertToMat(right_ptr);
 
-  geometry_msgs::PoseArray poses;
-  poses.header.stamp = image_left_msg->header.stamp;
-  poses.header.frame_id = image_left_msg->header.frame_id;
+    std::map<int, geometry_msgs::Pose> markers = detector->processImages(image_left,
+                                                                        image_right,
+                                                                        request.stereo_info,
+                                                                        display);
 
-  for(auto marker_info : markers){
-    int id = marker_info.first;
-    geometry_msgs::Pose marker = marker_info.second;
-    poses.poses.push_back(marker);
+    for(auto marker_info : markers){
+      int id = marker_info.first;
+      geometry_msgs::Pose marker = marker_info.second;
 
-    static tf2_ros::TransformBroadcaster br;
-    geometry_msgs::TransformStamped pose_tf;
-    pose_tf.header.stamp    = image_left_msg->header.stamp;
-    pose_tf.header.frame_id = image_left_msg->header.frame_id;
-    pose_tf.child_frame_id  = tf_ns+std::to_string(id);
+      geometry_msgs::TransformStamped pose_tf;
+      pose_tf.header.stamp    = request.left_image.header.stamp;
+      pose_tf.header.frame_id = request.left_image.header.frame_id;
+      pose_tf.child_frame_id  = tf_ns+std::to_string(id);
 
-    pose_tf.transform.translation.x = marker.position.x;
-    pose_tf.transform.translation.y = marker.position.y;
-    pose_tf.transform.translation.z = marker.position.z;
+      pose_tf.transform.translation.x = marker.position.x;
+      pose_tf.transform.translation.y = marker.position.y;
+      pose_tf.transform.translation.z = marker.position.z;
 
-    pose_tf.transform.rotation.x = marker.orientation.x;
-    pose_tf.transform.rotation.y = marker.orientation.y;
-    pose_tf.transform.rotation.z = marker.orientation.z;
-    pose_tf.transform.rotation.w = marker.orientation.w;
+      pose_tf.transform.rotation.x = marker.orientation.x;
+      pose_tf.transform.rotation.y = marker.orientation.y;
+      pose_tf.transform.rotation.z = marker.orientation.z;
+      pose_tf.transform.rotation.w = marker.orientation.w;
 
-    br.sendTransform(pose_tf);
-  }
-  pub_marker_pose.publish(poses);
+      response.ids.push_back(id);
+      response.transforms.push_back(pose_tf);
+    }
+    return true;
 }
 
 void setArucoDetector(int dictionary_id){
@@ -136,40 +133,17 @@ void setDiamondDetector(int dictionary_id){
 
 int main(int argc, char *argv[]) {
   ///<Initialize ROS
-  ros::init (argc, argv, "detector_node");
+  ros::init (argc, argv, "detector_service");
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
 
-  ///<Subscriber
-  //Rail Status
-  std::string image_left, image_right, marker, stereo_info, tf_prefix;
-  if(!nh_private.getParam(cares::marker::IMAGE_LEFT_S, image_left)){
-    ROS_ERROR((cares::marker::IMAGE_LEFT_S + " not set.").c_str());
-    return 0;
-  }
-  if(!nh_private.getParam(cares::marker::IMAGE_RIGHT_S, image_right)){
-    ROS_ERROR((cares::marker::IMAGE_RIGHT_S + " not set.").c_str());
-    return 0;
-  }
-  if(!nh_private.getParam(cares::marker::MARKERS_S, marker)){
-    ROS_ERROR((cares::marker::MARKERS_S + " not set.").c_str());
-    return 0;
-  }
-  ROS_INFO(marker.c_str());
-  ROS_INFO(image_left.c_str());
-  ROS_INFO(image_right.c_str());
-  if(!nh_private.getParam(cares::marker::STEREO_INFO_S, stereo_info)){
-    ROS_ERROR((cares::marker::STEREO_INFO_S + " not set.").c_str());
-    return 0;
-  }
-  ROS_INFO(stereo_info.c_str());
+  std::string tf_prefix;
   if(!nh_private.getParam(cares::marker::TF_PREFIX_S, tf_prefix)){
     ROS_ERROR((cares::marker::TF_PREFIX_S + " not set.").c_str());
     return 0;
   }
   tf_ns = tf_prefix + tf_ns;
   ROS_INFO(tf_ns.c_str());
-  nh_private.param(cares::marker::DISPLAY_B, display, true);
 
   int dictionary_id = 0;
   nh_private.param(cares::marker::DICTIONARY_I, dictionary_id, dictionary_id);
@@ -181,16 +155,10 @@ int main(int argc, char *argv[]) {
     setArucoDetector(dictionary_id);
   }
 
-  Subscriber<sensor_msgs::Image> image_left_sub(nh, image_left, 1);
-  Subscriber<sensor_msgs::Image> image_right_sub(nh, image_right, 1);
-  Subscriber<cares_msgs::StereoCameraInfo> camera_info_sub(nh, stereo_info, 1);
+  nh_private.param(cares::marker::DISPLAY_B, display, true);
 
-  typedef sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, cares_msgs::StereoCameraInfo> SyncPolicy;
-  Synchronizer<SyncPolicy> synchronizer(SyncPolicy(10), image_left_sub, image_right_sub, camera_info_sub);
-  synchronizer.registerCallback(callback);
-
-  pub_marker_pose = nh.advertise<geometry_msgs::PoseArray>(marker, 10);
-  ROS_INFO("Ready to find aruco markers");
+  ros::ServiceServer aruco_service = nh.advertiseService("aruco_detector", callback);
+  ROS_INFO("Service ready to find aruco markers");
 
   ros::spin();
 }

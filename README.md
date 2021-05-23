@@ -23,9 +23,9 @@ Presumes you are using ~/catkin_ws as ROS workspace, if you are not make adjustm
    a) cd ~/catkin_ws
    b) catkin_make
 
-4) sudo apt-get install ros-<dist>-tf-sensor-msgs 
+4) Install tf2 ros messages
+   a)sudo apt-get install ros-noetic-tf2-sensor-msgs
 ```
-
 
 ### Installing
 
@@ -102,34 +102,6 @@ roslaunch aruco_detector detector.launch
 </launch>
 ```
 
-Name space that the node operates in. 
-
-```
-<arg name="ns"            default="camera"/>
-```
-
-Image and camera info topics to subscribe to.
-```
-<arg name="image"         default="color/image_raw"/>
-<arg name="camera_info"   default="color/camera_info"/>
-```
-
-Marker array publisher
-```
-<arg name="markers"       default="markers"/>
-```
-
-Size of the marker, length of the square marker in mm
-
-```
-<param name="marker_size"   value="0.0315" />
-```
-
-Display detection results on screen
-```
-<param name="display"       value="$(arg display)"/>
-```
-
 ### Depth Detector
 
 ROS node that will detect aruco markers in RGBD data and publish the pose transform relative to the depth frame.
@@ -182,33 +154,10 @@ roslaunch aruco_detector depth_detector.launch
 </launch>
 ```
 
-Name space that the node operates in. 
-
-```
-<arg name="ns"            default="camera"/>
-```
-
-RGB Image, Depth Image, and camera info topics to subscribe to.
-
-```
-<arg name="image"         default="color/image_raw"/>
-<arg name="depth_image"   default="aligned_depth_to_color/image_raw"/>
-<arg name="camera_info"   default="color/camera_info"/>
-```
-
-Marker array publisher
-```
-<arg name="markers"       default="markers"/>
-```
-
-Display detection results on screen
-```
-<param name="display"       value="$(arg display)"/>
-```
-
 ### Stereo Detector
 
 ROS node that will detect aruco markers in stereo RGB data (undistorted currently) and publish the pose transform relative to the left frame.
+Node can also be run as an aruco diamond detector.
 
 ##### Subscribed Topics
 Topic names are all default names, they can be changed via setting parameters in the launch file.
@@ -258,28 +207,102 @@ roslaunch aruco_detector stereo_detector.launch
 </launch>
 ```
 
-Name space that the node operates in. 
-
 ```
-<arg name="ns"            default="camera"/>
+roslaunch aruco_detector stereo_diamond_detector.launch
 ```
 
-Rectified RGB Images, and stereo camera info topics to subscribe to.
+```xml
+<?xml version="1.0"?>
+<launch>
+  <arg name="ns"            default="stereo_pair"/>
+  <arg name="image_left"    default="left/image_rec"/>
+  <arg name="image_right"   default="right/image_rec"/>
+  <arg name="markers"       default="markers"/>
+  <arg name="stereo_info"   default="stereo_info"/>
+  <arg name="display"       default="true"/>
+
+  <arg name="centre"    default="11"/>
+  <arg name="top_left"  default="6"/>
+  <arg name="top_right" default="7"/>
+  <arg name="bot_right" default="16"/>
+  <arg name="bot_left"  default="15"/>
+
+  <group ns="$(arg ns)">
+      <node name="stereo_detector_node" pkg="aruco_detector" type="stereo_detector_node" output="screen" respawn="true">
+        <param name="image_left"    value="$(arg image_left)" />
+        <param name="image_right"   value="$(arg image_right)" />
+        <param name="markers"       value="$(arg markers)"/>
+        <param name="stereo_info"   value="$(arg stereo_info)" />
+        <param name="tf_prefix"     value="$(arg ns)" />
+        <param name="display"       value="$(arg display)"/>
+
+        <param name="centre"    value="$(arg centre)"/>
+        <param name="top_left"  value="$(arg top_left)"/>
+        <param name="top_right" value="$(arg top_right)"/>
+        <param name="bot_right" value="$(arg bot_right)"/>
+        <param name="bot_left"  value="$(arg bot_left)"/>
+      </node>
+   </group>
+</launch>
 
 ```
-<arg name="image_left"    default="left/image_color_rect"/>
-  <arg name="image_right"   default="right/image_color_rect"/>
-<arg name="stereo_info"   default="/camera_array/stereo1/stereo_info"/>
+
+### Stereo Detector Service
+
+ROS Service will detect aruco markers in stereo RGB data (undistorted currently) and return the pose transform relative to the left frame.
+Service can be run as a aruco detector or a diamond detector.
+
+#### Service Message
+
+* cares_msgs/ArucoDetect.srv
+
+##### Launch File
+```
+roslaunch aruco_detector stereo_detector_service.launch
 ```
 
-Marker array publisher
-```
-<arg name="markers"       default="markers"/>
+```xml
+<?xml version="1.0"?>
+<launch>
+  <arg name="ns"            default="stereo_pair"/>
+  <arg name="display"       default="true"/>
+
+  <node name="stereo_detector_service" pkg="aruco_detector" type="stereo_detector_service" output="screen" respawn="true">
+    <param name="tf_prefix" value="$(arg ns)" />
+    <param name="display"   value="$(arg display)"/>
+  </node>
+</launch>
+
 ```
 
-Display detection results on screen
 ```
-<param name="display"       value="$(arg display)"/>
+roslaunch aruco_detector stereo_diamond_detector_service.launch
+```
+
+```xml
+<?xml version="1.0"?>
+<launch>
+  <arg name="ns"            default="stereo_pair"/>
+  <arg name="display"       default="true"/>
+
+  <arg name="centre"    default="11"/>
+  <arg name="top_left"  default="6"/>
+  <arg name="top_right" default="7"/>
+  <arg name="bot_right" default="15"/>
+  <arg name="bot_left"  default="16"/>
+
+  <node name="stereo_detector_service" pkg="aruco_detector" type="stereo_detector_service" output="screen" respawn="true">
+    <param name="tf_prefix" value="$(arg ns)" />
+    <param name="display"   value="$(arg display)"/>
+
+    <param name="centre"    value="$(arg centre)"/>
+    <param name="top_left"  value="$(arg top_left)"/>
+    <param name="top_right" value="$(arg top_right)"/>
+    <param name="bot_right" value="$(arg bot_right)"/>
+    <param name="bot_left"  value="$(arg bot_left)"/>
+  </node>
+</launch>
+
 ```
 
 ## Version

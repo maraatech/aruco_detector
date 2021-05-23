@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="ns"            default="stereo_pair"/>
+  <arg name="display"       default="true"/>
+
+  <arg name="centre"    default="11"/>
+  <arg name="top_left"  default="6"/>
+  <arg name="top_right" default="7"/>
+  <arg name="bot_right" default="15"/>
+  <arg name="bot_left"  default="16"/>
+
+  <node name="stereo_detector_service" pkg="aruco_detector" type="stereo_detector_service" output="screen" respawn="true">
+    <param name="tf_prefix" value="$(arg ns)" />
+    <param name="display"   value="$(arg display)"/>
+
+    <param name="centre"    value="$(arg centre)"/>
+    <param name="top_left"  value="$(arg top_left)"/>
+    <param name="top_right" value="$(arg top_right)"/>
+    <param name="bot_right" value="$(arg bot_right)"/>
+    <param name="bot_left"  value="$(arg bot_left)"/>
+  </node>
+</launch>
