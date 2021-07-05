@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="ns"            default="stereo_pair"/>
-  <arg name="image_left"    default="left/image_rec"/>
-  <arg name="image_right"   default="right/image_rec"/>
+  <arg name="image_left"    default="left/image_rect_color"/>
+  <arg name="image_right"   default="right/image_rect_color"/>
   <arg name="markers"       default="markers"/>
   <arg name="stereo_info"   default="stereo_info"/>
   <arg name="display"       default="true"/>
