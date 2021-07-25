@@ -42,11 +42,11 @@ public:
 //                                                    double marker_size,
 //                                                    bool display);
 //    //Depth Detection
-//    std::map<int, geometry_msgs::Pose> processImage(Mat image,
-//                                                    Mat depth_image,
-//                                                    sensor_msgs::CameraInfo camera_info,
-//                                                    bool display,
-//                                                    bool is_depth_in_meters=false);
+    virtual std::map<int, geometry_msgs::Pose> processImage(Mat image,
+                                                    Mat depth_image,
+                                                    sensor_msgs::CameraInfo camera_info,
+                                                    bool display,
+                                                    bool is_depth_in_meters=false);
 };
 
 
