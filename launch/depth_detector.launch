@@ -1,12 +1,20 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="ns"            default="camera"/>
+  <arg name="ns"            default="zivid_camera"/>
+  <arg name="image"         default="color/image_color"/>
+  <arg name="markers"       default="markers"/>
+  <arg name="depth_image"   default="depth/image"/>
+  <arg name="camera_info"   default="depth/camera_info"/>
+  <arg name="display"       default="true"/>
+  <arg name="is_depth_in_meters" default="true" />
+
+  <!-- <arg name="ns"            default="camera"/>
   <arg name="image"         default="color/image_raw"/>
   <arg name="markers"       default="markers"/>
   <arg name="depth_image"   default="aligned_depth_to_color/image_raw"/>
   <arg name="camera_info"   default="color/camera_info"/>
   <arg name="display"       default="true"/>
-  <arg name="is_depth_in_meters" default="true" />
+  <arg name="is_depth_in_meters" default="false" /> -->
 
   <group ns="$(arg ns)">
       <node name="depth_detector_node" pkg="aruco_detector" type="depth_detector_node" output="screen">
@@ -16,7 +24,7 @@
         <param name="camera_info"   value="$(arg camera_info)" />
         <param name="tf_prefix"     value="$(arg ns)" />
         <param name="display"       value="$(arg display)"/>
-        <param name="is_depth_in_meters" type="string" value="$(arg is_depth_in_meters)" />
+        <param name="is_depth_in_meters" type="bool" value="$(arg is_depth_in_meters)" />
       </node>
    </group>
 </launch>

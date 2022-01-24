@@ -29,9 +29,11 @@ Matx41d aa2quaternion(const Matx31d& aa)
 
 void displayResult(Mat image, vector<int> ids, vector<vector<cv::Point2f> > marker_corners, std::string name){
   cv::aruco::drawDetectedMarkers(image, marker_corners, ids);
-  Mat dst;
-  cv::resize(image, dst, cv::Size(640, 480), 0, 0, INTER_CUBIC);
-  cv::imshow(name, dst);
+//  Mat dst;
+//  cv::resize(image, dst, cv::Size(640, 480), 0, 0, INTER_CUBIC);
+  cv::namedWindow(name, cv::WINDOW_NORMAL);
+  cv::resizeWindow(name, 640, 480);
+  cv::imshow(name, image);
   cv::waitKey(10);
 }
 
@@ -61,10 +63,14 @@ geometry_msgs::Pose findDepthPoint(cv::Mat depth_image, sensor_msgs::CameraInfo 
   double x = (pixel_x - camera_info.K.at(2)) / camera_info.K.at(0);
   double y = (pixel_y - camera_info.K.at(5)) / camera_info.K.at(4);
 
+  x = x * z;
+  y = y * z;
+  z = z;
+  
   if(!is_depth_in_meters){
-    x = x * z / 1000.0;//mm -> m
-    y = y * z / 1000.0;//mm -> m
-    z = z / 1000.0;//mm -> m
+    x /= 1000.0;
+    y /= 1000.0;
+    z /= 1000.0;
   }
 
   geometry_msgs::Pose pose_goal;

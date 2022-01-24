@@ -46,11 +46,18 @@ Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
   {
     //Get the time_start image in opencv Mat format
     Mat bgr_image = cv_bridge::toCvShare(msg, msg->encoding)->image;
-    std::cout<<msg->encoding<<std::endl;
+    // std::cout<<msg->encoding<<std::endl;
     //Convert RGB image to bgr if required
-    if(msg->encoding == "rgb8"){//TODO put static type in here instead
+    if(msg->encoding == image_encodings::RGB8){//TODO put static type in here instead
       cvtColor(bgr_image, bgr_image, CV_RGB2BGR);
     }
+    else if(msg->encoding == image_encodings::RGBA8){//TODO put static type in here instead
+      cvtColor(bgr_image, bgr_image, CV_RGBA2BGR);
+    }
+    // else if(msg->encoding == image_encodings::TYPE_8UC4){
+    //   cvtColor(bgr_image, bgr_image, COLOR_BGRA2BGR);
+    // }
+    // ROS_INFO("%i %i", bgr_image.depth(), bgr_image.channels());
     return bgr_image;
   }
   catch (cv_bridge::Exception& e)
@@ -131,9 +138,8 @@ int main(int argc, char *argv[]) {
   }
   tf_ns = tf_prefix + tf_ns;
   ROS_INFO(tf_ns.c_str());
-  
+
   nh_private.getParam(cares::marker::IS_DEPTH_IN_METERS, is_depth_in_meters);
-  std::cout<<"should be true "<<is_depth_in_meters<<std::endl;
   std::string t = "Depth data expected in ";
   t += is_depth_in_meters ? "m" : "mm";
 

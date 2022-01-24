@@ -46,7 +46,7 @@ public:
                                                     Mat depth_image,
                                                     sensor_msgs::CameraInfo camera_info,
                                                     bool display,
-                                                    bool is_depth_in_meters=false);
+                                                    bool is_depth_in_meters=false) override;
 };
 
 

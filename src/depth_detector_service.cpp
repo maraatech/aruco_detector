@@ -48,8 +48,11 @@ Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
         Mat bgr_image = cv_bridge::toCvShare(msg, msg->encoding)->image;
 
         //Convert RGB image to bgr if required
-        if(msg->encoding == "rgb8"){//TODO put static type in here instead
+        if(msg->encoding == image_encodings::RGB8){//TODO put static type in here instead
             cvtColor(bgr_image, bgr_image, CV_RGB2BGR);
+        }
+        else if(msg->encoding == image_encodings::TYPE_8UC4){
+          cvtColor(bgr_image, bgr_image, COLOR_BGRA2BGR);
         }
         return bgr_image;
     }
@@ -65,6 +68,7 @@ bool callback(cares_msgs::ArucoDetect::Request &request, cares_msgs::ArucoDetect
     auto depth_image_msg = boost::make_shared<sensor_msgs::Image>(request.depth_image);
     cv::Mat image = convertToMat(image_msg);
     cv::Mat depth_image = convertToMat(depth_image_msg);
+
     std::map<int, geometry_msgs::Pose> markers = detector->processImage(image, depth_image, request.camera_info, display, is_depth_in_meters);
 
     for(auto marker_info : markers){
@@ -153,7 +157,6 @@ int main(int argc, char *argv[]) {
     }
 
     nh_private.getParam(cares::marker::IS_DEPTH_IN_METERS, is_depth_in_meters);
-    std::cout<<"should be true "<<is_depth_in_meters<<std::endl;
     std::string t = "Depth data expected in ";
     t += is_depth_in_meters ? "m" : "mm";
 
