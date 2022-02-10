@@ -6,6 +6,8 @@
   <arg name="depth_image"   default="depth/image"/>
   <arg name="camera_info"   default="depth/camera_info"/>
   <arg name="display"       default="true"/>
+
+  <arg name="dictionary" default="3"/>
   <arg name="is_depth_in_meters" default="true" />
 
   <!-- <arg name="ns"            default="camera"/>
