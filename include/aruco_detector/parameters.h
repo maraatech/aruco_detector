@@ -16,7 +16,7 @@ namespace cares {
         const std::string MARKERS_S     = "markers";
         const std::string DEPTH_IMAGE_S = "depth_image";
         const std::string CAMERA_INFO_S = "camera_info";
-        const std::string MARKER_SIZE_D = "marker_size";
+
         const std::string TF_PREFIX_S   = "tf_prefix";
         const std::string DISPLAY_B     = "display";
         const std::string IS_DEPTH_IN_METERS = "is_depth_in_meters";
@@ -29,6 +29,10 @@ namespace cares {
         const std::string BOT_RIGHT_I = "bot_right";
         const std::string BOT_LEFT_I  = "bot_left";
 
+        const std::string BOARD_WIDTH_I   = "board_width";
+        const std::string BOARD_HEIGHT_I  = "board_height";
+        const std::string MARKER_SIZE_D   = "marker_length";
+        const std::string SQUARE_SIZE_D   = "square_length";
     }
 }
 

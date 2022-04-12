@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="ns"              default="stereo_pair"/>
+    <arg name="tf_prefix"     default="$(arg ns)"/>
+    <arg name="image"         default="/image_rect_color"/>
+    <arg name="markers"       default="markers"/>
+    <arg name="camera_info"   default="camera_info"/>
+    <arg name="display"       default="true"/>
+    <arg name="dictionary"    default="3"/>
+
+    <arg name="board_width"    default="16"/>
+    <arg name="board_height"   default="24"/>
+    <arg name="square_length" value="48.0"/><!--mm-->
+    <arg name="marker_length" value="36.0"/><!--mm-->
+
+  <arg name="is_depth_in_meters" default="true" />
+
+  <group ns="$(arg ns)">
+      <node name="charuco_detector_node" pkg="aruco_detector" type="charuco_detector_node" output="screen">
+        <param name="image"         value="$(arg image)" />
+        <param name="markers"       value="$(arg markers)"/>
+        <param name="camera_info"   value="$(arg camera_info)" />
+        <param name="tf_prefix"     value="$(arg ns)" />
+        <param name="display"       value="$(arg display)"/>
+        <param name="dictionary"    value="$(arg dictionary)"/>
+
+        <param name="board_width"    value="$(arg board_width)"/>
+        <param name="board_height"   value="$(arg board_height)"/>
+        <param name="marker_length"    value="$(arg marker_length)"/>
+        <param name="square_length"  value="$(arg square_length)"/>
+
+        <param name="is_depth_in_meters" type="bool" value="$(arg is_depth_in_meters)" />
+      </node>
+   </group>
+</launch>

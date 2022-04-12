@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
   Subscriber<sensor_msgs::Image> image_right_sub(nh, image_right, 1);
   Subscriber<cares_msgs::StereoCameraInfo> camera_info_sub(nh, stereo_info, 1);
 
-  typedef sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, cares_msgs::StereoCameraInfo> SyncPolicy;
+  typedef sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image, cares_msgs::StereoCameraInfo> SyncPolicy;
   Synchronizer<SyncPolicy> synchronizer(SyncPolicy(10), image_left_sub, image_right_sub, camera_info_sub);
   synchronizer.registerCallback(callback);
 

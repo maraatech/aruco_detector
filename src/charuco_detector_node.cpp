@@ -25,6 +25,8 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
+
+#include "../include/aruco_detector/charuco_detector.h"
 #include "../include/aruco_detector/parameters.h"
 #include "../include/aruco_detector/detector.h"
 
@@ -35,7 +37,7 @@ using namespace sensor_msgs;
 using namespace message_filters;
 
 //DepthMarkerDetector detector;
-MarkerDetector detector(0);
+MarkerDetector* detector;
 std::string tf_ns = "_aruco_";
 ros::Publisher pub_marker_pose;
 bool display = true;
@@ -68,15 +70,13 @@ Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
 }
 
 void callback(const sensor_msgs::ImageConstPtr &image_msg,
-              const sensor_msgs::ImageConstPtr &depth_image_msg,
               const sensor_msgs::CameraInfoConstPtr &camera_info){
   cv::Mat image = convertToMat(image_msg);
-  cv::Mat depth_image = convertToMat(depth_image_msg);
-  std::map<int, geometry_msgs::Pose> markers = detector.processImage(image, depth_image, *camera_info, display, is_depth_in_meters);
+  std::map<int, geometry_msgs::Pose> markers = detector->processImage(image, *camera_info, display, is_depth_in_meters);
 
   geometry_msgs::PoseArray poses;
-  poses.header.stamp = depth_image_msg->header.stamp;
-  poses.header.frame_id = depth_image_msg->header.frame_id;
+  poses.header.stamp    = image_msg->header.stamp;
+  poses.header.frame_id = image_msg->header.frame_id;
 
   for(auto marker_info : markers){
     int id = marker_info.first;
@@ -85,8 +85,8 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
 
     static tf2_ros::TransformBroadcaster br;
     geometry_msgs::TransformStamped pose_tf;
-    pose_tf.header.stamp    = depth_image_msg->header.stamp;
-    pose_tf.header.frame_id = depth_image_msg->header.frame_id;
+    pose_tf.header.stamp    = image_msg->header.stamp;
+    pose_tf.header.frame_id = image_msg->header.frame_id;
     pose_tf.child_frame_id  = tf_ns+std::to_string(id);
 
     pose_tf.transform.translation.x = marker.position.x;
@@ -103,6 +103,33 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
   pub_marker_pose.publish(poses);
 }
 
+void setCharucoDetector(int dictionary_id){
+
+  int square_x, square_y;
+  double square_length, marker_length;
+
+  ros::NodeHandle nh_private("~");
+  if(!nh_private.getParam(cares::marker::BOARD_WIDTH_I, square_x)) {
+    ROS_ERROR((cares::marker::BOARD_WIDTH_I + " not set.").c_str());
+    exit(1);
+  }
+  if(!nh_private.getParam(cares::marker::BOARD_HEIGHT_I, square_y)){
+    ROS_ERROR((cares::marker::BOARD_HEIGHT_I + " not set.").c_str());
+    exit(1);
+  }
+  if(!nh_private.getParam(cares::marker::SQUARE_SIZE_D, square_length)){
+    ROS_ERROR((cares::marker::SQUARE_SIZE_D + " not set.").c_str());
+    exit(1);
+  }
+  if(!nh_private.getParam(cares::marker::MARKER_SIZE_D, marker_length)){
+    ROS_ERROR((cares::marker::MARKER_SIZE_D + " not set.").c_str());
+    exit(1);
+  }
+  ROS_INFO("Board: %i %i", square_x, square_y);
+  ROS_INFO("Board Size: %f %f", square_length, marker_length);
+  detector = new CharcuoDetector(dictionary_id, square_x, square_y, square_length, marker_length);
+}
+
 int main(int argc, char *argv[]) {
   ///<Initialize ROS
   ros::init (argc, argv, "depth_detector_node");
@@ -111,7 +138,7 @@ int main(int argc, char *argv[]) {
 
   ///<Subscriber
   //Rail Status
-  std::string image, marker, depth_image, camera_info, tf_prefix;
+  std::string image, marker, camera_info, tf_prefix;
   if(!nh_private.getParam(cares::marker::IMAGE_S, image)){
     ROS_ERROR((cares::marker::IMAGE_S + " not set.").c_str());
     return 0;
@@ -122,11 +149,6 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   ROS_INFO(marker.c_str());
-  if(!nh_private.getParam(cares::marker::DEPTH_IMAGE_S, depth_image)){
-    ROS_ERROR((cares::marker::DEPTH_IMAGE_S + " not set.").c_str());
-    return 0;
-  }
-  ROS_INFO(depth_image.c_str());
   if(!nh_private.getParam(cares::marker::CAMERA_INFO_S, camera_info)){
     ROS_ERROR((cares::marker::CAMERA_INFO_S + " not set.").c_str());
     return 0;
@@ -145,15 +167,19 @@ int main(int argc, char *argv[]) {
 
   ROS_INFO(t.c_str());
 
+  int dictionary_id = 0;
+  nh_private.param(cares::marker::DICTIONARY_I, dictionary_id, dictionary_id);
+  ROS_INFO("Using dictionary: %i", dictionary_id);
+  setCharucoDetector(dictionary_id);
+
   nh_private.param(cares::marker::DISPLAY_B, display, true);
 
   Subscriber<sensor_msgs::Image> image_sub(nh, image, 1);
-  Subscriber<sensor_msgs::Image> depth_image_sub(nh, depth_image, 1);
   Subscriber<sensor_msgs::CameraInfo> camera_info_sub(nh, camera_info, 1);
 
-  typedef sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo> SyncPolicy;
-  Synchronizer<SyncPolicy> sync_three(SyncPolicy(10), image_sub, depth_image_sub, camera_info_sub);
-  sync_three.registerCallback(boost::bind(callback, _1, _2, _3));
+  typedef sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::CameraInfo> SyncPolicy;
+  Synchronizer<SyncPolicy> sync_three(SyncPolicy(10), image_sub, camera_info_sub);
+  sync_three.registerCallback(boost::bind(callback, _1, _2));
 
   pub_marker_pose = nh.advertise<geometry_msgs::PoseArray>(marker, 10);
 
