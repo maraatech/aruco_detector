@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   geometry_msgs
   sensor_msgs
+  message_generation
   cares_msgs
 )
 
@@ -149,7 +150,7 @@ add_executable(detector_node
 target_link_libraries(detector_node
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
-add_dependencies(detector_node ${catkin_EXPORTED_TARGETS})
+add_dependencies(detector_node ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(depth_detector_node
         src/depth_detector_node.cpp
@@ -162,7 +163,7 @@ add_executable(depth_detector_node
 target_link_libraries(depth_detector_node
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
-add_dependencies(depth_detector_node ${catkin_EXPORTED_TARGETS})
+add_dependencies(depth_detector_node ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(stereo_detector_node
         src/stereo_detector_node.cpp
@@ -175,7 +176,7 @@ add_executable(stereo_detector_node
 target_link_libraries(stereo_detector_node
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
-add_dependencies(stereo_detector_node ${catkin_EXPORTED_TARGETS})
+add_dependencies(stereo_detector_node ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(stereo_detector_service
         src/stereo_detector_service.cpp
@@ -188,7 +189,7 @@ add_executable(stereo_detector_service
 target_link_libraries(stereo_detector_service
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
-add_dependencies(stereo_detector_service ${catkin_EXPORTED_TARGETS})
+add_dependencies(stereo_detector_service ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(depth_detector_service
         src/depth_detector_service.cpp
@@ -201,7 +202,20 @@ add_executable(depth_detector_service
 target_link_libraries(depth_detector_service
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
-add_dependencies(depth_detector_service ${catkin_EXPORTED_TARGETS})
+add_dependencies(depth_detector_service ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+add_executable(charuco_detector
+        src/depth_detector_service.cpp
+        src/detector.cpp
+        include/aruco_detector/detector.h
+        include/aruco_detector/parameters.h
+        include/aruco_detector/common.h
+        src/charuco_detector.cpp
+        include/aruco_detector/charuco_detector.h)
+target_link_libraries(depth_detector_service
+        ${OpenCV_LIBRARIES}
+        ${catkin_LIBRARIES})
+add_dependencies(depth_detector_service ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries

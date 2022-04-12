@@ -24,7 +24,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/PoseArray.h>
-#include <cares_msgs/StereoCameraInfo.h>
+#include "cares_msgs/StereoCameraInfo.h"
 
 #include "../include/aruco_detector/parameters.h"
 #include "../include/aruco_detector/detector.h"

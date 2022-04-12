@@ -7,16 +7,6 @@ cv::Mat getQMatrix(const cares_msgs::StereoCameraInfo stereo_info) {
   return Q;
 }
 
-cv::Mat getCameraMatrix(const sensor_msgs::CameraInfo camera_info) {
-  cv::Mat camera_matrix(3, 3, CV_64FC1, (void *) camera_info.K.data());
-  return camera_matrix;
-}
-
-cv::Mat getDistCoef(const sensor_msgs::CameraInfo camera_info) {
-  cv::Mat dist_coeffs(1, camera_info.D.size(), CV_64FC1, (void *) camera_info.D.data());
-  return dist_coeffs;
-}
-
 Matx41d aa2quaternion(const Matx31d& aa)
 {
   double angle = cv::norm(aa);
@@ -160,6 +150,16 @@ int getIndex(int id, std::vector<int> &point_ids){
     }
   }
   return -1;
+}
+
+cv::Mat MarkerDetector::getCameraMatrix(const sensor_msgs::CameraInfo camera_info) {
+  cv::Mat camera_matrix(3, 3, CV_64FC1, (void *) camera_info.K.data());
+  return camera_matrix;
+}
+
+cv::Mat MarkerDetector::getDistCoef(const sensor_msgs::CameraInfo camera_info) {
+  cv::Mat dist_coeffs(1, camera_info.D.size(), CV_64FC1, (void *) camera_info.D.data());
+  return dist_coeffs;
 }
 
 void MarkerDetector::detect(Mat image, vector<int> &marker_ids, vector<vector<cv::Point2f> > &marker_corners){

@@ -19,14 +19,20 @@ using namespace cv;
 using namespace std;
 
 class MarkerDetector {
-private:
-    Ptr<aruco::DetectorParameters> detector_params;
+
+protected:
     Ptr<aruco::Dictionary> dictionary;
+    Ptr<aruco::DetectorParameters> detector_params;
 
     void detect(Mat image, vector<int> &marker_ids, vector<vector<cv::Point2f> > &marker_corners);
+
+    cv::Mat getCameraMatrix(const sensor_msgs::CameraInfo camera_info);
+
+    cv::Mat getDistCoef(const sensor_msgs::CameraInfo camera_info);
+
 public:
     MarkerDetector(int dictionary_id){
-      this->dictionary = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME(dictionary_id));
+      this->dictionary      = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME(dictionary_id));
       this->detector_params = aruco::DetectorParameters::create();
     }
 
