@@ -23,8 +23,8 @@ class CharcuoDetector : public MarkerDetector {
 private:
     cv::Ptr<cv::aruco::CharucoBoard> board;
 public:
-    CharcuoDetector(int dictionary_id, int square_x, int square_y, double square_length, double marker_length) : MarkerDetector(dictionary_id){
-      this->board = cv::aruco::CharucoBoard::create(square_x, square_y, square_length, marker_length, this->dictionary);
+    CharcuoDetector(int dictionary_id, int board_width, int board_height, double square_length, double marker_length) : MarkerDetector(dictionary_id){
+      this->board = cv::aruco::CharucoBoard::create(board_width, board_height, square_length, marker_length, this->dictionary);
     }
 
     //Stereo Detection

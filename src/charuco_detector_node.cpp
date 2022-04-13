@@ -72,6 +72,7 @@ Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
 void callback(const sensor_msgs::ImageConstPtr &image_msg,
               const sensor_msgs::CameraInfoConstPtr &camera_info){
   cv::Mat image = convertToMat(image_msg);
+
   std::map<int, geometry_msgs::Pose> markers = detector->processImage(image, *camera_info, display, is_depth_in_meters);
 
   geometry_msgs::PoseArray poses;
@@ -105,15 +106,15 @@ void callback(const sensor_msgs::ImageConstPtr &image_msg,
 
 void setCharucoDetector(int dictionary_id){
 
-  int square_x, square_y;
+  int board_width, board_height;
   double square_length, marker_length;
 
   ros::NodeHandle nh_private("~");
-  if(!nh_private.getParam(cares::marker::BOARD_WIDTH_I, square_x)) {
+  if(!nh_private.getParam(cares::marker::BOARD_WIDTH_I, board_width)) {
     ROS_ERROR((cares::marker::BOARD_WIDTH_I + " not set.").c_str());
     exit(1);
   }
-  if(!nh_private.getParam(cares::marker::BOARD_HEIGHT_I, square_y)){
+  if(!nh_private.getParam(cares::marker::BOARD_HEIGHT_I, board_height)){
     ROS_ERROR((cares::marker::BOARD_HEIGHT_I + " not set.").c_str());
     exit(1);
   }
@@ -125,11 +126,11 @@ void setCharucoDetector(int dictionary_id){
     ROS_ERROR((cares::marker::MARKER_SIZE_D + " not set.").c_str());
     exit(1);
   }
-  ROS_INFO("Board: %i %i", square_x, square_y);
+  ROS_INFO("Board: %i %i", board_width, board_height);
   square_length /= 1000.0;
   marker_length /= 1000.0;
   ROS_INFO("Board Size: %f m %f m", square_length, marker_length);
-  detector = new CharcuoDetector(dictionary_id, square_x, square_y, square_length, marker_length);
+  detector = new CharcuoDetector(dictionary_id, board_width, board_height, square_length, marker_length);
 }
 
 int main(int argc, char *argv[]) {

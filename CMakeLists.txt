@@ -25,6 +25,7 @@ find_package(catkin REQUIRED COMPONENTS
   cares_msgs
 )
 
+#find_package(OpenCV 4.5.5 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED)
 
