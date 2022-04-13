@@ -204,7 +204,7 @@ target_link_libraries(depth_detector_service
         ${catkin_LIBRARIES})
 add_dependencies(depth_detector_service ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
-add_executable(charuco_detector
+add_executable(charuco_detector_node
         src/charuco_detector_node.cpp
         src/detector.cpp
         include/aruco_detector/detector.h
@@ -212,10 +212,10 @@ add_executable(charuco_detector
         include/aruco_detector/common.h
         src/charuco_detector.cpp
         include/aruco_detector/charuco_detector.h)
-target_link_libraries(charuco_detector
+target_link_libraries(charuco_detector_node
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
-add_dependencies(charuco_detector ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(charuco_detector_node ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 
 ## Add cmake target dependencies of the library

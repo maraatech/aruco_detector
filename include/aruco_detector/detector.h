@@ -42,7 +42,7 @@ public:
                                                      cares_msgs::StereoCameraInfo stereo_info,
                                                      bool display);
     //Single Image
-    std::map<int, geometry_msgs::Pose> processImage(Mat image,
+    virtual std::map<int, geometry_msgs::Pose> processImage(Mat image,
                                                     sensor_msgs::CameraInfo camera_info,
                                                     double marker_size,
                                                     bool display);

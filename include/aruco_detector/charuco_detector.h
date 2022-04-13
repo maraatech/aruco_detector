@@ -36,7 +36,7 @@ public:
     std::map<int, geometry_msgs::Pose> processImage(Mat image,
                                                     sensor_msgs::CameraInfo camera_info,
                                                     double marker_size,
-                                                    bool display);
+                                                    bool display) override;
 //    //Depth Detection
 //    virtual std::map<int, geometry_msgs::Pose> processImage(Mat image,
 //                                                            Mat depth_image,

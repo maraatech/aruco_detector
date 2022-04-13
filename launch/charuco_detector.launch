@@ -2,16 +2,16 @@
 <launch>
   <arg name="ns"              default="stereo_pair"/>
     <arg name="tf_prefix"     default="$(arg ns)"/>
-    <arg name="image"         default="/image_rect_color"/>
+    <arg name="image"         default="stereo/image_color"/>
     <arg name="markers"       default="markers"/>
-    <arg name="camera_info"   default="camera_info"/>
+    <arg name="camera_info"   default="stereo/camera_info"/>
     <arg name="display"       default="true"/>
     <arg name="dictionary"    default="3"/>
 
-    <arg name="board_width"    default="16"/>
-    <arg name="board_height"   default="24"/>
-    <arg name="square_length" value="48.0"/><!--mm-->
-    <arg name="marker_length" value="36.0"/><!--mm-->
+    <arg name="board_width"    default="11"/>
+    <arg name="board_height"   default="8"/>
+    <arg name="square_length" value="15.0"/><!--mm-->
+    <arg name="marker_length" value="12.0"/><!--mm-->
 
   <arg name="is_depth_in_meters" default="true" />
 
@@ -26,7 +26,7 @@
 
         <param name="board_width"    value="$(arg board_width)"/>
         <param name="board_height"   value="$(arg board_height)"/>
-        <param name="marker_length"    value="$(arg marker_length)"/>
+        <param name="marker_length"  value="$(arg marker_length)"/>
         <param name="square_length"  value="$(arg square_length)"/>
 
         <param name="is_depth_in_meters" type="bool" value="$(arg is_depth_in_meters)" />

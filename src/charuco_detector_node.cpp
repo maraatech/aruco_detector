@@ -126,7 +126,9 @@ void setCharucoDetector(int dictionary_id){
     exit(1);
   }
   ROS_INFO("Board: %i %i", square_x, square_y);
-  ROS_INFO("Board Size: %f %f", square_length, marker_length);
+  square_length /= 1000.0;
+  marker_length /= 1000.0;
+  ROS_INFO("Board Size: %f m %f m", square_length, marker_length);
   detector = new CharcuoDetector(dictionary_id, square_x, square_y, square_length, marker_length);
 }
 
