@@ -1,14 +1,15 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="ns"            default="zivid_camera"/>
-  <arg name="image"         default="color/image_color"/>
+  <arg name="ns"            default="camera"/>
+  <arg name="tf_prefix"     default="$(arg ns)"/>
+  <arg name="image"         default="color/image_raw"/>
+  <arg name="depth_image"   default="aligned_depth_to_color/image_raw"/>
   <arg name="markers"       default="markers"/>
-  <arg name="depth_image"   default="depth/image"/>
-  <arg name="camera_info"   default="depth/camera_info"/>
+  <arg name="camera_info"   default="aligned_depth_to_color/camera_info"/>
   <arg name="display"       default="true"/>
 
   <arg name="dictionary" default="3"/>
-  <arg name="is_depth_in_meters" default="true" />
+  <arg name="is_depth_in_meters" default="false" />
 
   <!-- <arg name="ns"            default="camera"/>
   <arg name="image"         default="color/image_raw"/>

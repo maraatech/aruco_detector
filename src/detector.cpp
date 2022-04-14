@@ -4,7 +4,7 @@
 //TODO Move all these functions to common or cares_lib like package - generally tidy them up...
 cv::Mat getQMatrix(const cares_msgs::StereoCameraInfo stereo_info) {
   cv::Mat Q(4, 4, CV_64FC1, (void *) stereo_info.Q.data());
-  return Q;
+  return Q.clone();
 }
 
 Matx41d aa2quaternion(const Matx31d& aa)
@@ -154,12 +154,12 @@ int getIndex(int id, std::vector<int> &point_ids){
 
 cv::Mat MarkerDetector::getCameraMatrix(const sensor_msgs::CameraInfo camera_info) {
   cv::Mat camera_matrix(3, 3, CV_64FC1, (void *) camera_info.K.data());
-  return camera_matrix;
+  return camera_matrix.clone();
 }
 
 cv::Mat MarkerDetector::getDistCoef(const sensor_msgs::CameraInfo camera_info) {
   cv::Mat dist_coeffs(1, camera_info.D.size(), CV_64FC1, (void *) camera_info.D.data());
-  return dist_coeffs;
+  return dist_coeffs.clone();
 }
 
 void MarkerDetector::detect(Mat image, vector<int> &marker_ids, vector<vector<cv::Point2f> > &marker_corners){
@@ -272,7 +272,7 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image,
     image.copyTo(image_copy);
     cv::aruco::drawDetectedMarkers(image_copy, marker_corners, ids);
     for (int i = 0; i < ids.size(); i++) {
-      cv::aruco::drawAxis(image_copy, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.15);
+      cv::drawFrameAxes(image_copy, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.15);
     }
     cv::imshow("Output", image_copy);
     cv::waitKey(10);
