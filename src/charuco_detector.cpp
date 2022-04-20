@@ -131,3 +131,102 @@ std::map<int, geometry_msgs::Pose> CharcuoDetector::processImage(Mat image, sens
   
   return poses;
 }
+
+double normaliseAngle(double angle){
+  //180 == M_PI
+  //180 to -180
+  //185 -> -175
+  if(angle >= M_PI){
+    return -M_PI + (angle - M_PI);
+  }
+  // -185 -> 175
+  if(angle <= -M_PI){
+    return M_PI + (angle + M_PI);
+  }
+  return angle;
+}
+
+std::map<int, geometry_msgs::Pose> CharcuoDetector::processImages(Mat left_image, Mat right_image, cares_msgs::StereoCameraInfo stereo_info, bool display) {
+  std::map<int, geometry_msgs::Pose> marker_poses = MarkerDetector::processImages(left_image, right_image, stereo_info, display);
+
+  std::map<int, geometry_msgs::Pose> board_poses;
+
+  int board_width       = this->board->getChessboardSize().width / 2;//half the number of aruco IDs vs Squares
+  int board_height      = this->board->getChessboardSize().height / 2;//half the number of aruco IDs vs Squares
+  double square_length  = this->board->getSquareLength();
+
+  double roll_avg, pitch_avg, yaw_avg;
+  for(auto marker_pose : marker_poses){
+    geometry_msgs::Pose pose = marker_pose.second;
+    tf::Quaternion q(
+            pose.orientation.x,
+            pose.orientation.y,
+            pose.orientation.z,
+            pose.orientation.w);
+    tf::Matrix3x3 matrix(q);
+    double roll, pitch, yaw;
+    matrix.getRPY(roll, pitch, yaw);
+    roll_avg  += normaliseAngle(roll);
+    pitch_avg += normaliseAngle(pitch);
+    yaw_avg   += normaliseAngle(yaw);
+  }
+  roll_avg  = roll_avg / marker_poses.size();
+  pitch_avg = pitch_avg / marker_poses.size();
+  yaw_avg   = yaw_avg / marker_poses.size();
+
+  double x_avg = 0;
+  double y_avg = 0;
+  double z_avg = 0;
+  for (auto marker_pose : marker_poses) {
+    int id = marker_pose.first;
+
+    int index_x = id % board_width;
+    int index_y = id / board_width;
+
+    double board_x = square_length * index_x * 2;
+    if (index_y % 2 != 0)//if odd account for blank square at start
+      board_x += square_length;
+    double board_y = square_length * index_y;//twice as many squares as aruco Ids
+
+    //Pose of the marker relative to the camera optical space
+    geometry_msgs::Pose pose = marker_pose.second;
+
+    tf::Quaternion q(
+            pose.orientation.x,
+            pose.orientation.y,
+            pose.orientation.z,
+            pose.orientation.w);
+//    tf::Quaternion q;
+//    q.setRPY(roll_avg, pitch_avg, yaw_avg);
+    tf::Matrix3x3 matrix(q);
+    cv::Mat rotation(3,3,CV_64F);
+    for(int i = 0; i < 3; i++)
+      for(int j = 0; j < 3; j++)
+        rotation.at<double>(i, j) = matrix[i][j];
+
+    cv::Vec3d point(-board_x, board_y, 0);
+    cv::Mat result = rotation * point;
+
+    x_avg += pose.position.x + result.at<double>(0);
+    y_avg += pose.position.y + result.at<double>(1);
+    z_avg += pose.position.z + result.at<double>(2);
+
+//    geometry_msgs::Pose estimated_pose;
+//    estimated_pose.position.x = pose.position.x + result.at<double>(0);
+//    estimated_pose.position.y = pose.position.y + result.at<double>(1);
+//    estimated_pose.position.z = pose.position.z + result.at<double>(2);
+//    estimated_pose.orientation.w = 1;
+
+//    board_poses[id] = estimated_pose;
+  }
+  geometry_msgs::Pose estimated_pose;
+  estimated_pose.position.x = x_avg / marker_poses.size();
+  estimated_pose.position.y = y_avg / marker_poses.size();
+  estimated_pose.position.z = z_avg / marker_poses.size();
+  estimated_pose.orientation.w = 1;
+  board_poses[0] = estimated_pose;
+
+  this->once = false;
+  return board_poses;
+}
+//  std::vector<geometry_msgs::Pose> estimatd_poses;

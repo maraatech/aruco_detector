@@ -29,6 +29,7 @@
 #include "../include/aruco_detector/parameters.h"
 #include "../include/aruco_detector/detector.h"
 #include "../include/aruco_detector/diamond_detector.h"
+#include "../include/aruco_detector/charuco_detector.h"
 
 using namespace cv;
 using namespace std;
@@ -99,6 +100,35 @@ void callback(const sensor_msgs::ImageConstPtr &image_left_msg,
 
 void setArucoDetector(int dictionary_id){
   detector = new MarkerDetector(dictionary_id);
+}
+
+void setCharucoDetector(int dictionary_id){
+
+  int board_width, board_height;
+  double square_length, marker_length;
+
+  ros::NodeHandle nh_private("~");
+  if(!nh_private.getParam(cares::marker::BOARD_WIDTH_I, board_width)) {
+    ROS_ERROR((cares::marker::BOARD_WIDTH_I + " not set.").c_str());
+    exit(1);
+  }
+  if(!nh_private.getParam(cares::marker::BOARD_HEIGHT_I, board_height)){
+    ROS_ERROR((cares::marker::BOARD_HEIGHT_I + " not set.").c_str());
+    exit(1);
+  }
+  if(!nh_private.getParam(cares::marker::SQUARE_SIZE_D, square_length)){
+    ROS_ERROR((cares::marker::SQUARE_SIZE_D + " not set.").c_str());
+    exit(1);
+  }
+  if(!nh_private.getParam(cares::marker::MARKER_SIZE_D, marker_length)){
+    ROS_ERROR((cares::marker::MARKER_SIZE_D + " not set.").c_str());
+    exit(1);
+  }
+  ROS_INFO("Board: %i %i", board_width, board_height);
+  square_length /= 1000.0;
+  marker_length /= 1000.0;
+  ROS_INFO("Board Size: %f m %f m", square_length, marker_length);
+  detector = new CharcuoDetector(dictionary_id, board_width, board_height, square_length, marker_length);
 }
 
 void setDiamondDetector(int dictionary_id){
@@ -174,11 +204,19 @@ int main(int argc, char *argv[]) {
   int dictionary_id = 0;
   nh_private.param(cares::marker::DICTIONARY_I, dictionary_id, dictionary_id);
   ROS_INFO("Using dictionary: %i", dictionary_id);
-  if(nh_private.hasParam(cares::marker::CENTRE_I)){
+
+  std:string type;
+  nh_private.getParam("type", type);
+
+  if(type.compare("diamond") == 0)
     setDiamondDetector(dictionary_id);
-  }
-  else{
+  else if(type.compare("charuco") == 0)
+    setCharucoDetector(dictionary_id);
+  else if(type.compare("aruco") == 0)
     setArucoDetector(dictionary_id);
+  else{
+    ROS_INFO("Type: %s not found", type.c_str());
+    return 1;
   }
 
   Subscriber<sensor_msgs::Image> image_left_sub(nh, image_left, 1);

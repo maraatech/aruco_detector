@@ -173,7 +173,9 @@ add_executable(stereo_detector_node
         include/aruco_detector/parameters.h
         include/aruco_detector/common.h
         src/diamond_detector.cpp
-        include/aruco_detector/diamond_detector.h)
+        include/aruco_detector/diamond_detector.h
+        src/charuco_detector.cpp
+        include/aruco_detector/charuco_detector.h)
 target_link_libraries(stereo_detector_node
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})

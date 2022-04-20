@@ -11,6 +11,7 @@
 
   <group ns="$(arg ns)">
       <node name="stereo_detector_node" pkg="aruco_detector" type="stereo_detector_node" output="screen" respawn="true">
+        <param name="type"          value="aruco"/>
         <param name="image_left"    value="$(arg image_left)" />
         <param name="image_right"   value="$(arg image_right)" />
         <param name="markers"       value="$(arg markers)"/>

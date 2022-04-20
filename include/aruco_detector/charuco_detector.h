@@ -15,6 +15,8 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <cares_msgs/StereoCameraInfo.h>
 #include "detector.h"
+#include "math.h"
+#include <tf/tf.h>
 
 using namespace cv;
 using namespace std;
@@ -22,16 +24,18 @@ using namespace std;
 class CharcuoDetector : public MarkerDetector {
 private:
     cv::Ptr<cv::aruco::CharucoBoard> board;
+    bool once;
 public:
     CharcuoDetector(int dictionary_id, int board_width, int board_height, double square_length, double marker_length) : MarkerDetector(dictionary_id){
       this->board = cv::aruco::CharucoBoard::create(board_width, board_height, square_length, marker_length, this->dictionary);
+      this->once = true;
     }
 
     //Stereo Detection
-//    virtual std::map<int, geometry_msgs::Pose> processImages(Mat left_image,
-//                                                             Mat right_image,
-//                                                             cares_msgs::StereoCameraInfo stereo_info,
-//                                                             bool display) override;
+    virtual std::map<int, geometry_msgs::Pose> processImages(Mat left_image,
+                                                             Mat right_image,
+                                                             cares_msgs::StereoCameraInfo stereo_info,
+                                                             bool display) override;
     //Single Image
     std::map<int, geometry_msgs::Pose> processImage(Mat image,
                                                     sensor_msgs::CameraInfo camera_info,
