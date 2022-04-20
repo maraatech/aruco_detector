@@ -147,6 +147,68 @@ double normaliseAngle(double angle){
 }
 
 std::map<int, geometry_msgs::Pose> CharcuoDetector::processImages(Mat left_image, Mat right_image, cares_msgs::StereoCameraInfo stereo_info, bool display) {
+  std::map<int, geometry_msgs::Pose> board_poses;
+
+  std::map<int, geometry_msgs::Pose> marker_poses = MarkerDetector::processImages(left_image, right_image, stereo_info, display);
+
+  int board_width       = this->board->getChessboardSize().width / 2;//half the number of aruco IDs vs Squares
+  int board_height      = this->board->getChessboardSize().height / 2;//half the number of aruco IDs vs Squares
+  double square_length  = this->board->getSquareLength();
+
+  vector<Point2f> board_points_planar;
+  vector<Point2f> marker_points_planar;
+  for(auto marker_pose : marker_poses) {
+    int id = marker_pose.first;
+
+    int index_x = id % board_width;
+    int index_y = id / board_width;
+
+    double board_x = square_length * index_x * 2;
+    if (index_y % 2 != 0)//if odd account for blank square at start
+      board_x += square_length;
+    double board_y = square_length * index_y;//twice as many squares as aruco Ids
+
+    board_points_planar.push_back(cv::Point2f(board_x, board_y));
+
+    geometry_msgs::Pose pose = marker_pose.second;
+    marker_points_planar.push_back(cv::Point2f(pose.position.x, pose.position.y));
+  }
+
+  cv::Mat H = cv::findHomography(marker_points_planar, board_points_planar);
+
+  cv::Vec3d point(0, 0, 1);
+  cv::Mat result = H * point;
+//  double norm = sqrt(H.at<double>(0,0)*H.at<double>(0,0) +
+//                     H.at<double>(1,0)*H.at<double>(1,0) +
+//                     H.at<double>(2,0)*H.at<double>(2,0));
+//  H /= norm;
+//  Mat c1  = H.col(0);
+//  Mat c2  = H.col(1);
+//  Mat c3 = c1.cross(c2);
+//  Mat tvec = H.col(2);
+//  Mat R(3, 3, CV_64F);
+//  for (int i = 0; i < 3; i++){
+//    R.at<double>(i,0) = c1.at<double>(i,0);
+//    R.at<double>(i,1) = c2.at<double>(i,0);
+//    R.at<double>(i,2) = c3.at<double>(i,0);
+//  }
+
+//  cout << H << endl;
+//  cout << tvec << endl;
+
+  geometry_msgs::Pose pose;
+  pose.position.x = result.at<double>(0);
+  pose.position.y = result.at<double>(1);
+  pose.position.z = result.at<double>(2);
+  pose.orientation.w = 1.0;
+  board_poses[0] = pose;
+
+  return board_poses;
+}
+
+std::map<int, geometry_msgs::Pose>
+CharcuoDetector::stereoProcess(Mat left_image, Mat right_image, cares_msgs::StereoCameraInfo stereo_info,
+                               bool display) {
   std::map<int, geometry_msgs::Pose> marker_poses = MarkerDetector::processImages(left_image, right_image, stereo_info, display);
 
   std::map<int, geometry_msgs::Pose> board_poses;
@@ -210,14 +272,6 @@ std::map<int, geometry_msgs::Pose> CharcuoDetector::processImages(Mat left_image
     x_avg += pose.position.x + result.at<double>(0);
     y_avg += pose.position.y + result.at<double>(1);
     z_avg += pose.position.z + result.at<double>(2);
-
-//    geometry_msgs::Pose estimated_pose;
-//    estimated_pose.position.x = pose.position.x + result.at<double>(0);
-//    estimated_pose.position.y = pose.position.y + result.at<double>(1);
-//    estimated_pose.position.z = pose.position.z + result.at<double>(2);
-//    estimated_pose.orientation.w = 1;
-
-//    board_poses[id] = estimated_pose;
   }
   geometry_msgs::Pose estimated_pose;
   estimated_pose.position.x = x_avg / marker_poses.size();

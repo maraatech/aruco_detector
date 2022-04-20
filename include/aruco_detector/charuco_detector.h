@@ -25,6 +25,12 @@ class CharcuoDetector : public MarkerDetector {
 private:
     cv::Ptr<cv::aruco::CharucoBoard> board;
     bool once;
+
+    //Stereo Detection
+    std::map<int, geometry_msgs::Pose> stereoProcess(Mat left_image,
+                                                     Mat right_image,
+                                                     cares_msgs::StereoCameraInfo stereo_info,
+                                                     bool display);
 public:
     CharcuoDetector(int dictionary_id, int board_width, int board_height, double square_length, double marker_length) : MarkerDetector(dictionary_id){
       this->board = cv::aruco::CharucoBoard::create(board_width, board_height, square_length, marker_length, this->dictionary);
