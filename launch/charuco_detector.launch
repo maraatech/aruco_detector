@@ -17,10 +17,10 @@
     <arg name="display"       default="true"/>
     <arg name="dictionary"    default="3"/>
 
-    <arg name="board_width"    default="16"/>
-    <arg name="board_height"   default="24"/>
-    <arg name="square_length" value="48.0"/><!--mm-->
-    <arg name="marker_length" value="36.0"/><!--mm-->
+    <arg name="board_width"    default="5"/>
+    <arg name="board_height"   default="4"/>
+    <arg name="square_length" value="70.0"/><!--mm-->
+    <arg name="marker_length" value="54.0"/><!--mm-->
 
   <arg name="is_depth_in_meters" default="true" />
 

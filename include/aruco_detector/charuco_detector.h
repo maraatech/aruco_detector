@@ -24,29 +24,25 @@ using namespace std;
 class CharcuoDetector : public MarkerDetector {
 private:
     cv::Ptr<cv::aruco::CharucoBoard> board;
-    bool once;
 
-    //Stereo Detection
-    std::map<int, geometry_msgs::Pose> stereoProcess(Mat left_image,
-                                                     Mat right_image,
-                                                     cares_msgs::StereoCameraInfo stereo_info,
-                                                     bool display);
+    void displayFrameAxes(Mat image, Mat camera_matrix, Mat dist_coeffs, Vec3d rvec, Vec3d tvec, string name);
+
 public:
     CharcuoDetector(int dictionary_id, int board_width, int board_height, double square_length, double marker_length) : MarkerDetector(dictionary_id){
       this->board = cv::aruco::CharucoBoard::create(board_width, board_height, square_length, marker_length, this->dictionary);
-      this->once = true;
     }
 
-    //Stereo Detection
-    virtual std::map<int, geometry_msgs::Pose> processImages(Mat left_image,
-                                                             Mat right_image,
-                                                             cares_msgs::StereoCameraInfo stereo_info,
-                                                             bool display) override;
     //Single Image
     std::map<int, geometry_msgs::Pose> processImage(Mat image,
                                                     sensor_msgs::CameraInfo camera_info,
                                                     double marker_size,
                                                     bool display) override;
+    //Stereo Detection
+//    virtual std::map<int, geometry_msgs::Pose> processImages(Mat left_image,
+//                                                             Mat right_image,
+//                                                             cares_msgs::StereoCameraInfo stereo_info,
+//                                                             bool display) override;
+
 //    //Depth Detection
 //    virtual std::map<int, geometry_msgs::Pose> processImage(Mat image,
 //                                                            Mat depth_image,

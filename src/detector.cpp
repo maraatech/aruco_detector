@@ -2,22 +2,8 @@
 #include <tf2/LinearMath/Quaternion.h>
 
 //TODO Move all these functions to common or cares_lib like package - generally tidy them up...
-cv::Mat getQMatrix(const cares_msgs::StereoCameraInfo stereo_info) {
-  cv::Mat Q(4, 4, CV_64FC1, (void *) stereo_info.Q.data());
-  return Q.clone();
-}
 
-Matx41d aa2quaternion(const Matx31d& aa)
-{
-  double angle = cv::norm(aa);
-  Matx31d axis(aa(0) / angle, aa(1) / angle, aa(2) / angle);
-  double angle_2 = angle / 2;
-  //qx, qy, qz, qw
-  Matx41d q(axis(0) * sin(angle_2), axis(1) * sin(angle_2), axis(2) * sin(angle_2), cos(angle_2));
-  return q;
-}
-
-void displayResult(Mat image, vector<int> ids, vector<vector<cv::Point2f> > marker_corners, std::string name){
+void MarkerDetector::displayMarkers(Mat image, vector<int> ids, vector<vector<cv::Point2f> > marker_corners, std::string name){
   cv::aruco::drawDetectedMarkers(image, marker_corners, ids);
 //  Mat dst;
 //  cv::resize(image, dst, cv::Size(640, 480), 0, 0, INTER_CUBIC);
@@ -27,146 +13,12 @@ void displayResult(Mat image, vector<int> ids, vector<vector<cv::Point2f> > mark
   cv::waitKey(10);
 }
 
-Point getMarkerCenter(vector<Point2f> corners) {
-  float x=0, y=0;
-  for(int i=0;i<corners.size();i++)
-  {
-    x+=corners[i].x;
-    y+=corners[i].y;
-  }
-  return Point(x/4,y/4);
-}
-
-geometry_msgs::Pose findDepthPoint(cv::Mat depth_image, sensor_msgs::CameraInfo camera_info, int pixel_x, int pixel_y, double is_depth_in_meters) {
-  //#     [fx  0 cx]
-  //# K = [ 0 fy cy]
-  //#     [ 0  0  1]
-
-  double z = 0.0;
-  if (is_depth_in_meters){
-    z = (double)depth_image.at<float>(pixel_y, pixel_x);
-  }
-  else{
-    z = (double)depth_image.at<unsigned short>(pixel_y, pixel_x);
-  }
-
-  double x = (pixel_x - camera_info.K.at(2)) / camera_info.K.at(0);
-  double y = (pixel_y - camera_info.K.at(5)) / camera_info.K.at(4);
-
-  x = x * z;
-  y = y * z;
-  z = z;
-  
-  if(!is_depth_in_meters){
-    x /= 1000.0;
-    y /= 1000.0;
-    z /= 1000.0;
-  }
-
-  geometry_msgs::Pose pose_goal;
-  pose_goal.position.x = x;
-  pose_goal.position.y = y;
-  pose_goal.position.z = z;
-  pose_goal.orientation.x = 0;
-  pose_goal.orientation.y = 0;
-  pose_goal.orientation.z = 0;
-  pose_goal.orientation.w = 1;
-
-  return pose_goal;
-}
-
-geometry_msgs::Pose diff(geometry_msgs::Pose p1, geometry_msgs::Pose p2){
-  geometry_msgs::Pose pose;
-  pose.position.x = p1.position.x - p2.position.x;
-  pose.position.y = p1.position.y - p2.position.y;
-  pose.position.z = p1.position.z - p2.position.z;
-  pose.orientation.w = 1.0;
-  return pose;
-}
-
-geometry_msgs::Pose ave(geometry_msgs::Pose p1, geometry_msgs::Pose p2){
-  geometry_msgs::Pose pose;
-  pose.position.x = (p1.position.x + p2.position.x)/2.0;
-  pose.position.y = (p1.position.y + p2.position.y)/2.0;
-  pose.position.z = (p1.position.z + p2.position.z)/2.0;
-  pose.orientation.w = 1.0;
-  return pose;
-}
-
-geometry_msgs::Pose crossProduct(geometry_msgs::Pose p1, geometry_msgs::Pose p2){
-  geometry_msgs::Pose pose;
-  pose.position.x = p1.position.y * p2.position.z - p1.position.z * p2.position.y;
-  pose.position.y = p1.position.z * p2.position.x - p1.position.x * p2.position.z;
-  pose.position.z = p1.position.x * p2.position.y - p1.position.y * p2.position.x;
-  pose.orientation.w = 1.0;
-  return pose;
-}
-
-double length(geometry_msgs::Pose pose){
-  double v = pose.orientation.w * pose.orientation.w + pose.orientation.x * pose.orientation.x + pose.orientation.y * pose.orientation.y + pose.orientation.z * pose.orientation.z;
-  v = sqrt(v);
-  return v;
-}
-
-geometry_msgs::Pose norm(geometry_msgs::Pose p1){
-  geometry_msgs::Pose pose;
-  double length = sqrt(p1.position.x * p1.position.x + p1.position.y * p1.position.y + p1.position.z * p1.position.z);
-  pose.position.x = p1.position.x / length;
-  pose.position.y = p1.position.y / length;
-  pose.position.z = p1.position.z / length;
-  pose.orientation.w = 1.0;
-  return pose;
-}
-
-bool isValid(geometry_msgs::Pose pose){
-  return pose.position.z > 0;
-}
-
-geometry_msgs::Pose calculateStereoPose(Point left_point, Point right_point, Mat Q){
-  //Note this is ripped directly from kiwibot_vision. Hard values are unknown as documentation is lacking
-  cv::Mat coordmat = cv::Mat::zeros(4, 1, CV_64FC1);
-  double disparity = (double) abs((left_point.x) - (right_point.x ));
-  coordmat.at<double>(0, 0) = left_point.x;//*4
-  coordmat.at<double>(0, 1) = left_point.y;// * 4
-  coordmat.at<double>(0, 2) = disparity;
-  coordmat.at<double>(0, 3) = 1;
-  cv::Mat result = Q * coordmat;
-
-  double x = (double) result.at<double>(0, 0) / result.at<double>(0, 3);
-  double y = (double) result.at<double>(0, 1) / result.at<double>(0, 3);
-  double z = (double) result.at<double>(0, 2) / result.at<double>(0, 3);
-
-  geometry_msgs::Pose pose;
-  pose.position.x = x;
-  pose.position.y = y;
-  pose.position.z = z;
-  return pose;
-}
-
-int getIndex(int id, std::vector<int> &point_ids){
-  for(int i =0;i<point_ids.size();i++){
-    if(point_ids[i]==id){
-      return i;
-    }
-  }
-  return -1;
-}
-
-cv::Mat MarkerDetector::getCameraMatrix(const sensor_msgs::CameraInfo camera_info) {
-  cv::Mat camera_matrix(3, 3, CV_64FC1, (void *) camera_info.K.data());
-  return camera_matrix.clone();
-}
-
-cv::Mat MarkerDetector::getDistCoef(const sensor_msgs::CameraInfo camera_info) {
-  cv::Mat dist_coeffs(1, camera_info.D.size(), CV_64FC1, (void *) camera_info.D.data());
-  return dist_coeffs.clone();
-}
-
-void MarkerDetector::detect(Mat image, vector<int> &marker_ids, vector<vector<cv::Point2f> > &marker_corners){
+void MarkerDetector::detectMarkers(Mat image, vector<int> &marker_ids, vector<vector<cv::Point2f> > &marker_corners){
   vector<vector<cv::Point2f> > rejected_markers_;//Markers to ingore
   aruco::detectMarkers(image, this->dictionary, marker_corners, marker_ids, this->detector_params, rejected_markers_);
 }
 
+//TODO shift function somewhere useful
 geometry_msgs::Pose MarkerDetector::calculatePose(geometry_msgs::Pose p_centre, geometry_msgs::Pose top_left, geometry_msgs::Pose top_right, geometry_msgs::Pose bot_right, geometry_msgs::Pose  bot_left){
   //vectors that represent the direction of the edges of the square
   geometry_msgs::Pose top     = diff(top_right, top_left);
@@ -257,7 +109,7 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image,
                                                                 bool display) {
   vector<int> ids;
   vector<vector<cv::Point2f> > marker_corners;
-  detect(image, ids, marker_corners);
+  detectMarkers(image, ids, marker_corners);
 
   cv::Mat camera_matrix, dist_coeffs;
   //This process uses the K camera matrix and D distortion vector from CameraInfo
@@ -308,10 +160,10 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image,
                                                                 bool display, bool is_depth_in_meters) {
   vector<int> ids;
   vector<vector<cv::Point2f> > marker_corners;
-  detect(image, ids, marker_corners);
+  detectMarkers(image, ids, marker_corners);
 
   if(display) {
-    displayResult(image, ids, marker_corners, "Output");
+    displayMarkers(image, ids, marker_corners, "Output");
   }
 
   std::map<int, geometry_msgs::Pose> poses;
@@ -346,15 +198,15 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImages(Mat left_image,
                                                                  bool display) {
   vector<int> left_ids;
   vector<vector<cv::Point2f> > left_corners;
-  detect(left_image, left_ids, left_corners);
+  detectMarkers(left_image, left_ids, left_corners);
 
   vector<int> right_ids;
   vector<vector<cv::Point2f> > right_corners;
-  detect(right_image, right_ids, right_corners);
+  detectMarkers(right_image, right_ids, right_corners);
 
   if(display) {
-    displayResult(left_image, left_ids, left_corners, "Left Output");
-    displayResult(right_image, right_ids, right_corners, "Right Output");
+    displayMarkers(left_image, left_ids, left_corners, "Left Output");
+    displayMarkers(right_image, right_ids, right_corners, "Right Output");
   }
 
   Mat Q = getQMatrix(stereo_info);

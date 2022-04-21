@@ -12,9 +12,6 @@ std::map<int, geometry_msgs::Pose> DiamondDetector::processImages(Mat left_image
 
   std::map<int, geometry_msgs::Pose> poses = MarkerDetector::processImages(left_image, right_image, stereo_info, display);
 
-  // ROS_INFO("%d %d %d %d %d", hasId(this->centre_id, poses), hasId(this->top_left_id, poses), hasId(this->top_right_id, poses), hasId(this->bottom_right_id, poses), hasId(this->bottom_left_id, poses));
-  // cv::waitKey(0);
-
   std::map<int, geometry_msgs::Pose> diamond_poses;
 
   if(hasId(this->centre_id, poses)

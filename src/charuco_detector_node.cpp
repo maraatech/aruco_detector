@@ -38,7 +38,7 @@ using namespace message_filters;
 
 //DepthMarkerDetector detector;
 MarkerDetector* detector;
-std::string tf_ns = "_aruco_";
+std::string tf_ns = "_charuco_";
 ros::Publisher pub_marker_pose;
 bool display = true;
 bool is_depth_in_meters = false;

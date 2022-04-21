@@ -14,9 +14,11 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <cares_msgs/StereoCameraInfo.h>
+#include "common.h"
 
 using namespace cv;
 using namespace std;
+using namespace cares;
 
 class MarkerDetector {
 
@@ -24,11 +26,8 @@ protected:
     Ptr<aruco::Dictionary> dictionary;
     Ptr<aruco::DetectorParameters> detector_params;
 
-    void detect(Mat image, vector<int> &marker_ids, vector<vector<cv::Point2f> > &marker_corners);
-
-    cv::Mat getCameraMatrix(const sensor_msgs::CameraInfo camera_info);
-
-    cv::Mat getDistCoef(const sensor_msgs::CameraInfo camera_info);
+    void detectMarkers(Mat image, vector<int> &marker_ids, vector<vector<cv::Point2f> > &marker_corners);
+    void displayMarkers(Mat image, vector<int> ids, vector<vector<cv::Point2f>> marker_corners, string name);
 
 public:
     MarkerDetector(int dictionary_id){

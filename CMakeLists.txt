@@ -25,7 +25,8 @@ find_package(catkin REQUIRED COMPONENTS
   cares_msgs
 )
 
-find_package(OpenCV 4.5.5 REQUIRED)
+find_package(OpenCV REQUIRED)
+#find_package(OpenCV 4.5.5 REQUIRED)
 #find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED)
 
@@ -147,7 +148,8 @@ add_executable(detector_node
         include/aruco_detector/parameters.h
         include/aruco_detector/common.h
         src/diamond_detector.cpp
-        include/aruco_detector/diamond_detector.h)
+        include/aruco_detector/diamond_detector.h
+        include/aruco_detector/common.h src/common.cpp)
 target_link_libraries(detector_node
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
@@ -160,7 +162,8 @@ add_executable(depth_detector_node
         include/aruco_detector/parameters.h
         include/aruco_detector/common.h
         src/diamond_detector.cpp
-        include/aruco_detector/diamond_detector.h)
+        include/aruco_detector/diamond_detector.h
+        include/aruco_detector/common.h src/common.cpp)
 target_link_libraries(depth_detector_node
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
@@ -175,7 +178,8 @@ add_executable(stereo_detector_node
         src/diamond_detector.cpp
         include/aruco_detector/diamond_detector.h
         src/charuco_detector.cpp
-        include/aruco_detector/charuco_detector.h)
+        include/aruco_detector/charuco_detector.h
+        include/aruco_detector/common.h src/common.cpp)
 target_link_libraries(stereo_detector_node
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
@@ -188,7 +192,8 @@ add_executable(stereo_detector_service
         include/aruco_detector/parameters.h
         include/aruco_detector/common.h
         src/diamond_detector.cpp
-        include/aruco_detector/diamond_detector.h)
+        include/aruco_detector/diamond_detector.h
+        include/aruco_detector/common.h src/common.cpp)
 target_link_libraries(stereo_detector_service
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
@@ -201,7 +206,8 @@ add_executable(depth_detector_service
         include/aruco_detector/parameters.h
         include/aruco_detector/common.h
         src/diamond_detector.cpp
-        include/aruco_detector/diamond_detector.h)
+        include/aruco_detector/diamond_detector.h
+        include/aruco_detector/common.h src/common.cpp)
 target_link_libraries(depth_detector_service
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
@@ -214,7 +220,8 @@ add_executable(charuco_detector_node
         include/aruco_detector/parameters.h
         include/aruco_detector/common.h
         src/charuco_detector.cpp
-        include/aruco_detector/charuco_detector.h)
+        include/aruco_detector/charuco_detector.h
+        include/aruco_detector/common.h src/common.cpp)
 target_link_libraries(charuco_detector_node
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
