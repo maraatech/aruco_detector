@@ -13,18 +13,11 @@ What things you need to install the software and how to install them.
 Presumes you are using ~/catkin_ws as ROS workspace, if you are not make adjustments where required.
 
 ```
-1) ROS Melodic (no known reason why future versions will not work at this stage, Kenitic works fine too)
+1) ROS Noetic
 
-2) Pull master version of cares_msgs
-   a) cd ~/catkin_ws/src
-   b) git clone https://github.com/UoA-CARES/cares_msgs.git
+2) Install master version of cares_msgs: https://github.com/UoA-CARES/cares_msgs.git
    
-3) Compile all libraries
-   a) cd ~/catkin_ws
-   b) catkin_make
-
-4) Install tf2 ros messages
-   a)sudo apt-get install ros-noetic-tf2-sensor-msgs
+3) Install tf2 ros messages: sudo apt-get install ros-noetic-tf2-sensor-msgs
 ```
 
 ### Installing
@@ -51,6 +44,12 @@ Tests to be added
 
 ## Applications
 
+### Marker Types Support
+These package supports detection of the three marker types:
+* Aruco: mono, stereo, depth
+* Diamond Aruco: stereo, depth
+* Charuo: mono
+
 ### RGB Detector
 ROS node that will detect aruco markers in an RGB image and publish the pose transform relative to the color frame. 
 
@@ -72,8 +71,7 @@ Topic names are all default names, they can be changed via setting parameters in
 ##### Broadcast Transforms
 Broadcast pose of the markers
 * geometry_msgs::TransformStamped
-  * Pose of each marker N: "camera_aruco_N"
-
+  * Pose of each marker N: "ns_MARKER_TYPE_N"
 
 ### Depth Detector
 ROS node that will detect aruco markers in RGBD data and publish the pose transform relative to the depth frame.
@@ -96,8 +94,7 @@ Topic names are all default names, they can be changed via setting parameters in
 ##### Broadcast Transforms
 Broadcast pose of the markers
 * geometry_msgs::TransformStamped
-  * Pose of each marker N: "camera_aruco_N"
-
+  * Pose of each marker N: "ns_MARKER_TYPE_N"
 
 ### Stereo Detector
 ROS node that will detect aruco markers in stereo RGB data (undistorted currently) and publish the pose transform relative to the left frame.
@@ -121,13 +118,11 @@ Topic names are all default names, they can be changed via setting parameters in
 ##### Broadcast Transforms
 Broadcast pose of the markers
 * geometry_msgs::TransformStamped
-  * Pose of each marker N: "camera_aruco_N"
+  * Pose of each marker N: "ns_MARKER_TYPE_N"
 
 
-### Stereo Detector Service
-
-ROS Service will detect aruco markers in stereo RGB data (undistorted currently) and return the pose transform relative to the left frame.
-Service can be run as a aruco detector or a diamond detector.
+### Marker Detector Services
+Stereo and depth camera based marker detection can be run as a service as well.
 
 #### Service Message
 
