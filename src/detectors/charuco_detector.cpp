@@ -1,7 +1,7 @@
 //
 // Created by anyone on 12/04/22.
 //
-#include "../include/aruco_detector/charuco_detector.h"
+#include "../../include/aruco_detector/charuco_detector.h"
 
 void CharcuoDetector::displayFrameAxes(Mat image, Mat camera_matrix, Mat dist_coeffs, Vec3d rvec, Vec3d tvec, std::string name){
   cv::drawFrameAxes(image, camera_matrix, dist_coeffs, rvec, tvec, 0.1f);
@@ -63,9 +63,6 @@ std::map<int, geometry_msgs::Pose> CharcuoDetector::processImage(Mat image, sens
 
       poses[0] = pose;
     }
-  }
-  else {
-    ROS_INFO("Not Found");
   }
   return poses;
 }

@@ -13,8 +13,14 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <cares_msgs/StereoCameraInfo.h>
+#include <sensor_msgs/Image.h>
+#include <cv_bridge/cv_bridge.h>
+
+#include "parameters.h"
 
 namespace cares{
+    cv::Mat convertToMat(const sensor_msgs::ImageConstPtr& msg);
+
     cv::Mat getQMatrix(const cares_msgs::StereoCameraInfo stereo_info);
     cv::Mat getCameraMatrix(const sensor_msgs::CameraInfo camera_info);
     cv::Mat getDistCoef(const sensor_msgs::CameraInfo camera_info);

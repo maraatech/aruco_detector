@@ -1,9 +1,30 @@
 //
 // Created by anyone on 22/04/22.
 //
+
 #include "../include/aruco_detector/common.h"
 
 namespace cares {
+
+    cv::Mat convertToMat(const sensor_msgs::ImageConstPtr& msg){
+      try{
+        cv::Mat bgr_image = cv_bridge::toCvShare(msg, msg->encoding)->image;
+
+        //Convert RGB image to bgr if required
+        if(msg->encoding == sensor_msgs::image_encodings::RGB8){
+          cvtColor(bgr_image, bgr_image, CV_RGB2BGR);
+        }
+        else if(msg->encoding == sensor_msgs::image_encodings::RGBA8){
+          cvtColor(bgr_image, bgr_image,CV_RGBA2BGR);
+        }
+        return bgr_image;
+      }
+      catch (cv_bridge::Exception& e){
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        exit(1);
+      }
+    }
+
     cv::Mat getQMatrix(const cares_msgs::StereoCameraInfo stereo_info) {
       cv::Mat Q(4, 4, CV_64FC1, (void *) stereo_info.Q.data());
       return Q.clone();

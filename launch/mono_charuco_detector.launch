@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="display" default="true"/>
+
+  <arg name="ns"            default="stereo_pair"/>
+  <arg name="tf_prefix"     default="$(arg ns)"/>
+
+  <arg name="service"       default="false"/>
+
+  <arg name="markers"       default="markers"/>
+
+  <arg name="image"         default="left/image_rect_color"/>
+  <arg name="camera_info"   default="left/rec_camera_info"/>
+  <arg name="dictionary"    default="3"/>
+
+  <arg name="board_width"    default="16"/>
+  <arg name="board_height"   default="24"/>
+  <arg name="square_length"  default="48.0"/><!--mm-->
+  <arg name="marker_length"  default="36.0"/><!--mm-->
+
+  <include file="$(find aruco_detector)/launch/base_marker.launch" pass_all_args="true">
+    <arg name="marker_type" value="charuco"/>
+    <arg name="sensor_type" value="mono"/>
+  </include>
+</launch>

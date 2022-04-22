@@ -2,7 +2,7 @@
 // Created by anyone on 18/05/21.
 //
 
-#include "../include/aruco_detector/diamond_detector.h"
+#include "../../include/aruco_detector/diamond_detector.h"
 
 bool hasId(int id, std::map<int, geometry_msgs::Pose> &poses){
   return !(poses.find(id) == poses.end());

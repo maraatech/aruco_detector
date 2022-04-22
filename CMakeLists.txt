@@ -141,92 +141,25 @@ include_directories(
     ${Boost_INCLUDE_DIRS}
 )
 
-add_executable(detector_node
-        src/detector_node.cpp
-        src/detector.cpp
-        include/aruco_detector/detector.h
-        include/aruco_detector/parameters.h
-        include/aruco_detector/common.h
-        src/diamond_detector.cpp
-        include/aruco_detector/diamond_detector.h
-        include/aruco_detector/common.h src/common.cpp)
-target_link_libraries(detector_node
-        ${OpenCV_LIBRARIES}
-        ${catkin_LIBRARIES})
-add_dependencies(detector_node ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_executable(marker_detector_node
+        src/marker_detector_node.cpp
 
-add_executable(depth_detector_node
-        src/depth_detector_node.cpp
-        src/detector.cpp
-        include/aruco_detector/detector.h
         include/aruco_detector/parameters.h
         include/aruco_detector/common.h
-        src/diamond_detector.cpp
-        include/aruco_detector/diamond_detector.h
-        include/aruco_detector/common.h src/common.cpp)
-target_link_libraries(depth_detector_node
-        ${OpenCV_LIBRARIES}
-        ${catkin_LIBRARIES})
-add_dependencies(depth_detector_node ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+        src/common.cpp
 
-add_executable(stereo_detector_node
-        src/stereo_detector_node.cpp
-        src/detector.cpp
         include/aruco_detector/detector.h
-        include/aruco_detector/parameters.h
-        include/aruco_detector/common.h
-        src/diamond_detector.cpp
+        src/detectors/detector.cpp
+
         include/aruco_detector/diamond_detector.h
-        src/charuco_detector.cpp
+        src/detectors/diamond_detector.cpp
+
         include/aruco_detector/charuco_detector.h
-        include/aruco_detector/common.h src/common.cpp)
-target_link_libraries(stereo_detector_node
+        src/detectors/charuco_detector.cpp)
+target_link_libraries(marker_detector_node
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
-add_dependencies(stereo_detector_node ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-
-add_executable(stereo_detector_service
-        src/stereo_detector_service.cpp
-        src/detector.cpp
-        include/aruco_detector/detector.h
-        include/aruco_detector/parameters.h
-        include/aruco_detector/common.h
-        src/diamond_detector.cpp
-        include/aruco_detector/diamond_detector.h
-        include/aruco_detector/common.h src/common.cpp)
-target_link_libraries(stereo_detector_service
-        ${OpenCV_LIBRARIES}
-        ${catkin_LIBRARIES})
-add_dependencies(stereo_detector_service ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-
-add_executable(depth_detector_service
-        src/depth_detector_service.cpp
-        src/detector.cpp
-        include/aruco_detector/detector.h
-        include/aruco_detector/parameters.h
-        include/aruco_detector/common.h
-        src/diamond_detector.cpp
-        include/aruco_detector/diamond_detector.h
-        include/aruco_detector/common.h src/common.cpp)
-target_link_libraries(depth_detector_service
-        ${OpenCV_LIBRARIES}
-        ${catkin_LIBRARIES})
-add_dependencies(depth_detector_service ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-
-add_executable(charuco_detector_node
-        src/charuco_detector_node.cpp
-        src/detector.cpp
-        include/aruco_detector/detector.h
-        include/aruco_detector/parameters.h
-        include/aruco_detector/common.h
-        src/charuco_detector.cpp
-        include/aruco_detector/charuco_detector.h
-        include/aruco_detector/common.h src/common.cpp)
-target_link_libraries(charuco_detector_node
-        ${OpenCV_LIBRARIES}
-        ${catkin_LIBRARIES})
-add_dependencies(charuco_detector_node ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-
+add_dependencies(marker_detector_node ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries

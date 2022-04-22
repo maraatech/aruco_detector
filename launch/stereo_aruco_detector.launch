@@ -12,17 +12,10 @@
   <arg name="image_left"    default="left/image_rect_color"/>
   <arg name="image_right"   default="right/image_rect_color"/>
   <arg name="stereo_info"   default="stereo_info"/>
-
   <arg name="dictionary"    default="3"/>
-  <arg name="centre"    value="100"/>
-  <arg name="top_left"  value="91"/>
-  <arg name="top_right" value="92"/>
-  <arg name="bot_right" value="108"/>
-  <arg name="bot_left"  value="107"/>
 
   <include file="$(find aruco_detector)/launch/base_marker.launch" pass_all_args="true">
-    <arg name="marker_type" value="diamond"/>
+    <arg name="marker_type" value="aruco"/>
     <arg name="sensor_type" value="stereo"/>
   </include>
 </launch>
-

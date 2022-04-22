@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="display" default="true"/>
+
+  <arg name="ns"            default="camera"/>
+  <arg name="tf_prefix"     default="$(arg ns)"/>
+
+  <arg name="service"       default="false"/>
+  
+  <arg name="markers"       default="markers"/>
+
+  <arg name="image"         default="color/image_raw"/>
+  <arg name="depth_image"   default="aligned_depth_to_color/image_raw"/>
+  <arg name="camera_info"   default="aligned_depth_to_color/camera_info"/>
+  <arg name="dictionary"    default="3"/>
+
+  <arg name="is_depth_in_meters" default="false"/>
+
+  <include file="$(find aruco_detector)/launch/base_marker.launch" pass_all_args="true">
+    <arg name="marker_type"   value="aruco"/>
+    <arg name="sensor_type"   value="depth"/>
+  </include>
+</launch>
