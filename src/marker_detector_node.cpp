@@ -211,6 +211,7 @@ void runMonoCallback(){
     ROS_ERROR((cares::marker::MARKER_SIZE_D + " not set.").c_str());
     exit(1);
   }
+  marker_size /= 1000.0;
   ROS_INFO("Marker Size: %s",std::to_string(marker_size).c_str());
 
   Subscriber<sensor_msgs::Image> image_sub(nh, image, 1);
