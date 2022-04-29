@@ -49,6 +49,35 @@ bool is_depth_in_meters = true;
 double marker_size = 0;
 
 ///< Service Callback Methods
+bool monoService(cares_msgs::ArucoDetect::Request &request, cares_msgs::ArucoDetect::Response &response) {
+  auto image_msg = boost::make_shared<sensor_msgs::Image>(request.image);
+  cv::Mat image = convertToMat(image_msg);
+
+  std::map<int, geometry_msgs::Pose> markers = detector->processImage(image, request.camera_info, marker_size, display);
+  for(auto marker_info : markers){
+    int id = marker_info.first;
+    geometry_msgs::Pose marker = marker_info.second;
+
+    geometry_msgs::TransformStamped pose_tf;
+    pose_tf.header.stamp    = request.left_image.header.stamp;
+    pose_tf.header.frame_id = request.left_image.header.frame_id;
+    pose_tf.child_frame_id  = tf_ns+std::to_string(id);
+
+    pose_tf.transform.translation.x = marker.position.x;
+    pose_tf.transform.translation.y = marker.position.y;
+    pose_tf.transform.translation.z = marker.position.z;
+
+    pose_tf.transform.rotation.x = marker.orientation.x;
+    pose_tf.transform.rotation.y = marker.orientation.y;
+    pose_tf.transform.rotation.z = marker.orientation.z;
+    pose_tf.transform.rotation.w = marker.orientation.w;
+
+    response.ids.push_back(id);
+    response.transforms.push_back(pose_tf);
+  }
+  return true;
+}
+
 bool depthService(cares_msgs::ArucoDetect::Request &request, cares_msgs::ArucoDetect::Response &response) {
   auto image_msg = boost::make_shared<sensor_msgs::Image>(request.image);
   auto depth_image_msg = boost::make_shared<sensor_msgs::Image>(request.depth_image);
@@ -104,6 +133,7 @@ bool stereoService(cares_msgs::ArucoDetect::Request &request, cares_msgs::ArucoD
     pose_tf.transform.translation.y = marker.position.y;
     pose_tf.transform.translation.z = marker.position.z;
 
+    pose_tf.transform.rotation.x = marker.orientation.x;
     pose_tf.transform.rotation.x = marker.orientation.x;
     pose_tf.transform.rotation.y = marker.orientation.y;
     pose_tf.transform.rotation.z = marker.orientation.z;
@@ -178,9 +208,12 @@ void stereoCallback(const sensor_msgs::ImageConstPtr &image_left_msg,
 void runService(std::string sensor_type){
   ros::NodeHandle nh;
   ros::ServiceServer aruco_service;
-  std::string service_name = "aruco_detector";//TODO parametise this name
+  std::string service_name = "/aruco_detector";//TODO parametise this name
 
-  if(sensor_type.compare("stereo") == 0) {
+  if(sensor_type.compare("mono") == 0) {
+    aruco_service = nh.advertiseService(service_name, monoService);
+  }
+  else if(sensor_type.compare("stereo") == 0) {
     aruco_service = nh.advertiseService(service_name, stereoService);
   }
   else if(sensor_type.compare("depth") == 0) {

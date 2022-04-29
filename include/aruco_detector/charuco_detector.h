@@ -29,7 +29,7 @@ private:
 
 public:
     CharcuoDetector(int dictionary_id, int board_width, int board_height, double square_length, double marker_length) : MarkerDetector(dictionary_id){
-      this->board = cv::aruco::CharucoBoard::create(board_width, board_height, square_length, marker_length, this->dictionary);
+      this->board = cv::aruco::CharucoBoard::create(board_width+1, board_height+1, square_length, marker_length, this->dictionary);
     }
 
     //Single Image

@@ -24,8 +24,10 @@
 
   <!-- Marker Parameters -->
   <arg name="dictionary"    default="3"/>
-  <arg name="board_width"   default="0"/>
-  <arg name="board_height"  default="0"/>
+
+  <!-- corners to be consistent with checker board - squares minus one -->
+  <arg name="board_width"   default="0"/><!-- corners to be consistent with checker board -->
+  <arg name="board_height"  default="0"/><!-- corners to be consistent with checker board -->
   <arg name="square_length" default="0"/><!--mm-->
   <arg name="marker_length" default="0"/><!--mm-->
 
@@ -37,7 +39,7 @@
   <arg name="bot_left"   default=""/>
 
   <group ns="$(arg ns)">
-      <node name="$(arg marker_type)_detector_node" pkg="aruco_detector" type="marker_detector_node" output="screen">
+      <node name="$(arg marker_type)_detector_node2" pkg="aruco_detector" type="marker_detector_node" output="screen">
         <param name="display"       value="$(arg display)"/>
 
         <param name="service"       value="$(arg service)"/>
