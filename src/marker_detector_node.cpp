@@ -27,6 +27,7 @@
 
 #include <cares_msgs/StereoCameraInfo.h>
 #include "cares_msgs/ArucoDetect.h"
+#include "cares_msgs/ArucoMarkers.h"
 
 #include "../include/aruco_detector/common.h"
 #include "../include/aruco_detector/parameters.h"
@@ -147,14 +148,15 @@ bool stereoService(cares_msgs::ArucoDetect::Request &request, cares_msgs::ArucoD
 
 ///< Callback Methods
 void publishResults(std::map<int, geometry_msgs::Pose> markers, ros::Time time_stamp, std::string frame_id){
-  geometry_msgs::PoseArray poses;
-  poses.header.stamp    = time_stamp;
-  poses.header.frame_id = frame_id;
+  cares_msgs::ArucoMarkers aruco_markers;
+  aruco_markers.header.stamp    = time_stamp;
+  aruco_markers.header.frame_id = frame_id;
 
   for(auto marker_info : markers){
     int id = marker_info.first;
     geometry_msgs::Pose marker = marker_info.second;
-    poses.poses.push_back(marker);
+    aruco_markers.marker_ids.push_back(id);
+    aruco_markers.marker_poses.push_back(marker);
 
     static tf2_ros::TransformBroadcaster br;
     geometry_msgs::TransformStamped pose_tf;
@@ -173,7 +175,7 @@ void publishResults(std::map<int, geometry_msgs::Pose> markers, ros::Time time_s
 
     br.sendTransform(pose_tf);
   }
-  pub_marker_pose.publish(poses);
+  pub_marker_pose.publish(aruco_markers);
 }
 
 void monoCallback(const sensor_msgs::ImageConstPtr &image_msg,
@@ -433,7 +435,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  pub_marker_pose = nh.advertise<geometry_msgs::PoseArray>(marker, 10);
+  pub_marker_pose = nh.advertise<cares_msgs::ArucoMarkers>(marker, 10);
 
   std::string sensor_type;
   nh_private.getParam("sensor_type", sensor_type);
