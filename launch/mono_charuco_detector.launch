@@ -14,10 +14,10 @@
   <arg name="dictionary"    default="3"/>
 
   <!-- corners to be consistent with checker board - squares minus one -->
-  <arg name="board_width"    default="5"/><!-- corners to be consistent with checker board -->
-  <arg name="board_height"   default="3"/><!-- corners to be consistent with checker board -->
-  <arg name="square_length"  default="65.0"/><!--mm-->
-  <arg name="marker_length"  default="51.0"/><!--mm-->
+  <arg name="board_width"   default="7"/><!--Number of corners-->
+  <arg name="board_height"  default="10"/><!--Number of corners-->
+  <arg name="square_length" default="100.0"/><!--mm-->
+  <arg name="marker_length" default="78.0"/><!--mm-->
 
   <include file="$(find aruco_detector)/launch/base_marker.launch" pass_all_args="true">
     <arg name="marker_type" value="charuco"/>
