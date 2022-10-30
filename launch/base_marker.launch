@@ -2,12 +2,12 @@
 <launch>
   <arg name="display" default="true"/>
 
-  <arg name="service"     default="false"/>
+  <arg name="service"     default="true"/>
   <arg name="marker_type" default=""/>
   <arg name="sensor_type" default=""/>
 
-  <arg name="ns"        default=""/>
-  <arg name="tf_prefix" default="$(arg ns)"/>
+  <arg name="sensor"      default=""/>
+  <arg name="tf_prefix"   default="$(arg sensor)"/>
 
   <arg name="markers" default="markers"/>
   
@@ -38,7 +38,7 @@
   <arg name="bot_right"  default=""/>
   <arg name="bot_left"   default=""/>
 
-  <group ns="$(arg ns)">
+  <group ns="$(arg sensor)">
       <node name="$(arg marker_type)_detector_node" pkg="aruco_detector" type="marker_detector_node" output="screen">
         <param name="display"       value="$(arg display)"/>
 

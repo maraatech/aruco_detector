@@ -2,8 +2,8 @@
 <launch>
   <arg name="display" default="true"/>
 
-  <arg name="ns"            default="stereo_pair"/>
-  <arg name="tf_prefix"     default="$(arg ns)"/>
+  <arg name="sensor"        default="stereo_pair"/>
+  <arg name="tf_prefix"     default="$(arg sensor)"/>
 
   <arg name="service"       default="false"/>
   

@@ -210,7 +210,7 @@ void stereoCallback(const sensor_msgs::ImageConstPtr &image_left_msg,
 void runService(std::string sensor_type){
   ros::NodeHandle nh;
   ros::ServiceServer aruco_service;
-  std::string service_name = "/aruco_detector";//TODO parametise this name
+  std::string service_name = "aruco_detector";//TODO parametise this name
 
   if(sensor_type.compare("mono") == 0) {
     aruco_service = nh.advertiseService(service_name, monoService);
