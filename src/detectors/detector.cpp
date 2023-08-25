@@ -15,6 +15,19 @@ void MarkerDetector::displayMarkers(Mat image, vector<int> ids, vector<vector<cv
 
 void MarkerDetector::detectMarkers(Mat image, vector<int> &marker_ids, vector<vector<cv::Point2f> > &marker_corners){
   vector<vector<cv::Point2f> > rejected_markers_;//Markers to ingore
+
+  this->detector_params->cornerRefinementMethod = cv::aruco::CORNER_REFINE_SUBPIX;
+  // this->detector_params->adaptiveThreshWinSizeMin = 141;
+  // this->detector_params->adaptiveThreshWinSizeMax = 251;
+  // this->detector_params->adaptiveThreshWinSizeStep = 20;
+  this->detector_params->adaptiveThreshConstant = 10; 
+
+  // # Parameter for 3MegaPixel Images
+  // aruco_params.adaptiveThreshWinSizeMin = 141  # default 3
+  // aruco_params.adaptiveThreshWinSizeMax = 251  # default 23
+  // aruco_params.adaptiveThreshWinSizeStep = 20  # default 10
+  // aruco_params.adaptiveThreshConstant = 4      # default 7
+
   aruco::detectMarkers(image, this->dictionary, marker_corners, marker_ids, this->detector_params, rejected_markers_);
 }
 
@@ -117,7 +130,8 @@ std::map<int, geometry_msgs::Pose> MarkerDetector::processImage(Mat image,
   dist_coeffs   = getDistCoef(camera_info);
 
   std::vector<cv::Vec3d> rvecs, tvecs;//Output
-  cv::aruco::estimatePoseSingleMarkers(marker_corners, marker_size, camera_matrix, dist_coeffs, rvecs, tvecs);
+  // cv::aruco::estimatePoseSingleMarkers(marker_corners, marker_size, camera_matrix, dist_coeffs, rvecs, tvecs);
+  cv::solvePnP(marker_corners, image, camera_matrix, dist_coeffs, rvecs, tvecs);
 
   if(display) {
     Mat image_copy;
